@@ -1,0 +1,24 @@
+# Dépendances
+node_modules/
+dist/
+.vite/
+
+# Secrets — la clé service_role de Supabase ne doit JAMAIS être committée
+.env
+.env.*
+!.env.example
+*.key
+secrets*
+
+# Sauvegardes de base
+*.dump
+*.sql.gz
+meridien_*.sql
+
+# Listes nominatives d'étudiants
+etudiants.csv
+comptes*.csv
+
+# Système
+.DS_Store
+Thumbs.db
