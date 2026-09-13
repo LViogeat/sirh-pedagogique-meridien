@@ -10,6 +10,14 @@ Vue 3 + PrimeVue, conçu pour StackBlitz. C'est le projet que les étudiants for
 
 Sur StackBlitz, l'étape 2 est automatique : il ne reste que le fichier de configuration.
 
+Pour pointer ailleurs sans toucher à ce fichier suivi par git — c'est ce que fait
+`scripts/demo-locale.sh` — poser un `app/.env.local`, que git ignore :
+
+```
+VITE_SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_ANON_KEY=...
+```
+
 ## Ce qu'un groupe a le droit de faire
 
 Créer des fichiers dans **`src/modules/<son-code>/`** — et rien d'autre.

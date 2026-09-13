@@ -4,8 +4,8 @@ Socle Core HR pour le cours de Master SIRH, Université Paris 1 Panthéon-Sorbon
 Trois journées espacées d'un mois (octobre, novembre, décembre), sprints d'une heure,
 étudiants non-développeurs travaillant avec une IA en conversation.
 
-**État : phase 1 livrée** — architecture, modèle de données et base de données.
-Le socle applicatif (phase 2) et les kits pédagogiques (phase 3) restent à construire.
+**État : phases 1 et 2 livrées** — architecture, modèle de données, base de données,
+et socle applicatif Vue 3 + PrimeVue. Les kits pédagogiques (phase 3) restent à écrire.
 
 ## Documentation
 
@@ -16,6 +16,26 @@ Le socle applicatif (phase 2) et les kits pédagogiques (phase 3) restent à con
 | [`docs/03-conventions-modules.md`](docs/03-conventions-modules.md) | Ce qu'un groupe peut faire, et où |
 | [`docs/04-sdk.md`](docs/04-sdk.md) | L'antisèche — future base du kit de prompts |
 | [`db/06-comptes.md`](db/06-comptes.md) | Créer les comptes, attribuer les groupes, livrer une table |
+| [`app/README.md`](app/README.md) | Le socle applicatif : structure, SDK, ce qu'un groupe peut faire |
+
+## Tout monter en local, en une commande
+
+```bash
+./scripts/demo-locale.sh          # base + données + comptes + application
+./scripts/demo-locale.sh stop     # arrête et libère Docker
+```
+
+Monte un Supabase complet dans Docker, applique les scripts, crée trois comptes
+de démonstration et lance l'application sur http://localhost:5199.
+Sert à **tester une évolution du schéma avant de la passer en production**.
+
+| Compte | Mot de passe | Rôle |
+|---|---|---|
+| `prof@meridien.fr` | `meridien` | Core HR |
+| `lea@meridien.fr` | `meridien` | groupe `rec` |
+| `paul@meridien.fr` | `meridien` | groupe `gta` |
+
+Console Supabase : http://localhost:54323
 
 ## Installer la base
 
