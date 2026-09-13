@@ -117,7 +117,7 @@ declare
 begin
   foreach v in array array[
     'v_employes_actifs', 'v_personnes', 'v_effectif_par_service',
-    'v_mouvements', 'v_organigramme', 'v_historique_remuneration'
+    'v_mouvements', 'v_organigramme', 'v_historique_remuneration', 'v_postes'
   ] loop
     execute format('grant select on public.%I to authenticated', v);
     execute format('revoke all on public.%I from anon', v);

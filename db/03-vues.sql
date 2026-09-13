@@ -287,3 +287,39 @@ join contrats         c  on c.id  = a.contrat_id
 join personnes        p  on p.id  = c.personne_id
 join ref_type_avenant ta on ta.code = a.type_avenant_code
 window w as (partition by c.id order by a.numero_ordre);
+
+
+-- -----------------------------------------------------------------------------
+-- v_postes — les positions, avec leur titulaire s'il y en a un.
+--
+-- Un poste vacant ne se décrète pas, il se CALCULE : un poste ouvert auquel
+-- aucune affectation en cours n'est rattachée. Le faire ici plutôt que côté
+-- application évite que chaque module en donne sa propre définition.
+-- -----------------------------------------------------------------------------
+
+create or replace view v_postes as
+select distinct on (p.id)
+  p.id                                  as poste_id,
+  p.code,
+  p.libelle,
+  p.etp_budgete,
+  p.ouvert,
+  em.id                                 as emploi_id,
+  em.libelle                            as emploi,
+  em.famille_metier,
+  u.id                                  as service_id,
+  u.libelle                             as service,
+  etb.nom                               as etablissement,
+  a.personne_id                         as titulaire_id,
+  pe.prenom || ' ' || coalesce(pe.nom_usage, pe.nom) as titulaire,
+  (a.personne_id is not null)           as pourvu,
+  (p.ouvert and a.personne_id is null)  as vacant
+from postes p
+join      emplois                    em  on em.id  = p.emploi_id
+join      unites_organisationnelles  u   on u.id   = p.unite_id
+join      etablissements             etb on etb.id = u.etablissement_id
+left join affectations               a   on a.poste_id  = p.id
+                                        and a.date_debut <= current_date
+                                        and (a.date_fin is null or a.date_fin >= current_date)
+left join personnes                  pe  on pe.id = a.personne_id
+order by p.id, a.date_debut desc;

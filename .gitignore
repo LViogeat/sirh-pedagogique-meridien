@@ -22,3 +22,7 @@ comptes*.csv
 # Système
 .DS_Store
 Thumbs.db
+
+# Application
+app/node_modules/
+app/dist/

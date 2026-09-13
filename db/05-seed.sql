@@ -155,7 +155,7 @@ create temp table _plan (
 insert into _plan values
   ( 1,'DAF','Direction Administrative et Financière','COMPTA',   'Comptabilité',                       'SIEGE',  8,'EMP','RESP_COMPTA','Responsable comptable',           'COMPTABLE',    'Comptable',                'Finance'),
   ( 2,'DAF','Direction Administrative et Financière','CONTROLE', 'Contrôle de gestion',                'SIEGE',  5,'CAD','RESP_CDG',   'Responsable contrôle de gestion', 'CDG',          'Contrôleur de gestion',    'Finance'),
-  ( 3,'DRH','Direction des Ressources Humaines',     'PAIE',     'Paie et administration du personnel','SIEGE',  6,'EMP','RESP_PAIE',  'Responsable paie et ADP',         'GEST_PAIE',    'Gestionnaire de paie',     'Ressources humaines'),
+  ( 3,'DRH','Direction des Ressources Humaines',     'PAIE',     'Paie et ADP','SIEGE',  6,'EMP','RESP_PAIE',  'Responsable paie et ADP',         'GEST_PAIE',    'Gestionnaire de paie',     'Ressources humaines'),
   ( 4,'DRH','Direction des Ressources Humaines',     'DEVRH',    'Développement RH',                   'SIEGE',  5,'CAD','RESP_DEVRH', 'Responsable développement RH',    'CHARGE_RH',    'Chargé de développement RH','Ressources humaines'),
   ( 5,'DSI','Direction des Systèmes d''Information', 'ETUDES',   'Études et développement',            'SIEGE', 22,'CAD','RESP_ETUDES','Responsable études',              'DEV',          'Développeur',              'Informatique'),
   ( 6,'DSI','Direction des Systèmes d''Information', 'PROD',     'Production et support',              'SIEGE', 14,'TAM','RESP_PROD',  'Responsable production',          'TECH_SUP',     'Technicien support',       'Informatique'),

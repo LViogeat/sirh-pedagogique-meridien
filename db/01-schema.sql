@@ -11,6 +11,7 @@
 -- =============================================================================
 
 drop view  if exists v_historique_remuneration cascade;
+drop view  if exists v_postes               cascade;
 drop view  if exists v_organigramme          cascade;
 drop view  if exists v_mouvements            cascade;
 drop view  if exists v_effectif_par_service  cascade;

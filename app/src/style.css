@@ -1,0 +1,27 @@
+:root { color-scheme: light; }
+
+* { box-sizing: border-box; }
+
+html, body, #app { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+               'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  color: var(--p-text-color);
+  background: var(--p-surface-100);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+/* Les tableaux larges défilent dans leur propre conteneur : la page ne
+   part jamais en défilement horizontal. */
+.p-datatable-wrapper { overflow-x: auto; }
+
+.grille-stats {
+  display: grid; gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  margin-bottom: 1.5rem;
+}
