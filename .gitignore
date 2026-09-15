@@ -1,19 +1,20 @@
-# Dépendances
+# Dépendances et artefacts de build
 node_modules/
 dist/
 .vite/
+__pycache__/
+*.pyc
+.venv/
 
-# Secrets — la clé service_role de Supabase ne doit JAMAIS être committée
+# Configuration locale — jetons de groupe et chaîne de connexion
 .env
 .env.*
 !.env.example
-*.key
-secrets*
 
 # Sauvegardes de base
 *.dump
 *.sql.gz
-meridien_*.sql
+groupes-*.sql
 
 # Listes nominatives d'étudiants
 etudiants.csv
@@ -22,7 +23,3 @@ comptes*.csv
 # Système
 .DS_Store
 Thumbs.db
-
-# Application
-app/node_modules/
-app/dist/

@@ -1,113 +1,220 @@
 # Architecture
 
-*SIRH pédagogique — Master SIRH, Université Paris 1 Panthéon-Sorbonne*
+*Socle SIRH Sorbonne-Hôtel — Master 2 SIRH, Université Paris 1 Panthéon-Sorbonne*
 
 ## Le problème à résoudre
 
-Faire produire un logiciel SIRH par des étudiants **non-développeurs**, en trois journées espacées d'un mois (octobre, novembre, décembre), par sprints d'une heure, avec pour seul outil de développement une IA en conversation et du copier/coller.
+Faire produire six modules d'un SIRH par dix-neuf étudiants **non-développeurs**,
+en trois jours, par sprints d'environ deux heures de production réelle, avec
+pour seul outil une IA en conversation et du copier-coller.
 
-Le code n'est pas l'objectif : c'est le support. Ce que les étudiants doivent emporter, c'est la capacité à lire un modèle de données, exprimer un besoin exploitable, piloter une IA, recetter et démontrer. **Chaque minute passée à déboguer un import est volée à la conception.**
+Le code n'est pas l'objectif : c'est le support. Ce que les étudiants doivent
+emporter, c'est la capacité à lire un modèle de données, exprimer un besoin
+exploitable, piloter une IA, recetter et démontrer.
 
+**Chaque minute passée à déboguer un import est volée à la conception.**
 Toute l'architecture découle de cette phrase.
 
 ## Vue d'ensemble
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  StackBlitz — Vue 3 + PrimeVue                           │
-│                                                          │
-│   socle/          corehr/         modules/rec/  gta/ ... │
-│   ├ sidebar       ├ salariés      ├ module.js            │
-│   ├ SDK           ├ organigramme  ├ OffresList.vue       │
-│   ├ session       └ tableau bord  └ Pipeline.vue         │
-│   └ erreurs                            ↑                 │
-│        │                        seule zone étudiante     │
-└────────┼─────────────────────────────────────────────────┘
-         │  supabase-js (HTTPS)
-┌────────▼─────────────────────────────────────────────────┐
-│  Supabase — PostgreSQL                                   │
-│                                                          │
-│   Vues aplaties ← le contrat d'interface                 │
-│        ↑                                                 │
-│   Core HR historisé          Tables de module            │
-│   personnes · contrats       rec_* · gta_* · form_* ...  │
-│   avenants · affectations                                │
-│   postes · emplois                                       │
-│                                                          │
-│   RLS : lecture pour tous, écriture pour le propriétaire │
-└──────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│  code-server ×6 — une instance par groupe, un sous-domaine chacune  │
+│                                                                     │
+│   app/src/socle/      app/src/corehr/      app/src/modules/rec/     │
+│   ├ SDK               ├ Besoins            ├ module.js              │
+│   ├ menu auto         ├ Salariés           ├ schema.sql             │
+│   └ barrière d'erreur ├ Postes             └ OffresList.vue         │
+│                       ├ Entretiens               ↑                  │
+│                       └ Console SQL      seule zone étudiante       │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │  HTTPS · Authorization: Bearer <jeton>
+┌───────────────────────────▼─────────────────────────────────────────┐
+│  API FastAPI                                                         │
+│   /etablissements /salaries /postes /entretiens /besoins   lecture   │
+│   PATCH /besoins/{id}                              la seule écriture │
+│   POST /sql                         sous le rôle PostgreSQL du groupe│
+│   /admin/*                                    réservé à l'intervenant│
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────────────┐
+│  PostgreSQL                                                          │
+│                                                                      │
+│   schéma public              schémas rec · form · mob · gta ·        │
+│   Core HR + Évaluation       portail · onb                           │
+│   + identified_needs         propriété de chaque groupe              │
+│                                                                      │
+│   grp_all lit public et tous les schémas ; chaque groupe n'écrit     │
+│   que chez lui. C'est la base qui arbitre.                           │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Les décisions
 
-### Supabase plutôt qu'un backend
+### Un socle figé, et des groupes propriétaires de leur schéma
 
-Un backend Node classique aurait coûté un sprint entier au premier bug, et ses données n'auraient pas survécu à un rechargement de page — encore moins à quatre semaines d'intervalle. Supabase fournit Postgres hébergé et une API REST auto-générée : **zéro ligne de backend à écrire, à déboguer ou à héberger**.
+C'est la décision structurante. Elle règle d'un coup deux problèmes qui, dans
+un dispositif de trois jours, coûtent très cher.
 
-C'est aussi la seule option où les données saisies en octobre existent encore en décembre. Avec du `localStorage` ou un fichier JSON, chaque session repartirait de zéro.
+Le premier : **l'intervenant en goulot d'étranglement.** Si c'est lui qui crée
+les tables des groupes, chaque sprint commence par une file d'attente. En
+donnant à chaque groupe un schéma PostgreSQL dont il est propriétaire, le
+rituel de demande d'évolution disparaît : un groupe écrit son `create table`
+dans la console SQL du socle et travaille.
 
-### L'intervenant seul fait le DDL
+Le second : **la modélisation comme objet de cours.** Un consultant SIRH doit
+savoir lire et critiquer un modèle de données. Créer ses propres tables, se
+tromper, et devoir les reprendre est exactement l'exercice visé. Un magasin de
+données générique le leur aurait retiré.
 
-Les étudiants ne créent jamais de table. Ils rédigent une demande d'évolution ; l'intervenant la traite avec Claude Code et la livre.
+Corollaire : le socle n'a plus besoin de bouger, et il ne bougera pas.
 
-C'est plus simple, c'est plus sûr, et c'est surtout **conforme à leur futur métier** : dans un vrai SIRH, un consultant fonctionnel n'écrit pas de DDL — il spécifie, et découvre qu'un besoin mal exprimé revient mal servi.
+### Un groupe, un module, un menu
 
-### Une seule base partagée
+Le menu affiche le SIRH entier — le socle et les six modules — mais **un seul
+est ouvrable : celui du groupe**, désigné par `VITE_MODULE_CODE`. Les cinq
+autres apparaissent grisés, et le routeur refuse d'y aller même par une URL
+tapée à la main.
 
-Tous les groupes lisent le **même** référentiel de 180 salariés. Les modules ajoutent leurs tables, préfixées par leur code (`rec_`, `gta_`, `form_`, `eval_`).
+Montrer les six plutôt que masquer les autres est délibéré : chaque groupe voit
+où son module s'inscrit dans l'ensemble, et ce que les autres construisent à
+côté. C'est la même raison qui fait qu'il n'y a qu'une seule base.
 
-C'est ce qui rend la démonstration finale crédible — tout le monde parle des mêmes personnes — et c'est littéralement la leçon du cours : *un référentiel unique, des modules branchés dessus*.
+Les écrans du socle, eux, sont **en consultation stricte**. Aucun bouton
+d'action n'y figure, pas même sur les besoins identifiés : prendre un besoin en
+charge est une opération de module, elle appartient aux écrans du groupe. Un
+bouton « Prendre en charge » posé sur un écran du socle brouillerait
+exactement la frontière que le cours cherche à enseigner.
 
-### Un modèle historisé, exposé à plat
+### Chaque module ne prend que son type de besoin
 
-`contrats`, `avenants` et `affectations` sont datés, parce qu'un SIRH doit savoir où était un salarié au 31 décembre — et combien il gagnait. Un salaire n'est pas une colonne qu'on écrase : c'est l'état courant d'une suite d'avenants. Mais exposer ce modèle temporel brut à des non-développeurs garantirait des requêtes fausses à chaque sprint.
+Tout le monde lit tous les besoins — c'est ce qui rend la chaîne lisible en
+démonstration. Mais le module Recrutement ne prend en charge que les besoins
+de recrutement, Formation que ceux de formation, Mobilité que ceux de
+mobilité. Les trois autres modules n'en consomment aucun.
 
-Les étudiants consomment donc des **vues aplaties** : une ligne par salarié, état du jour. Ils voient l'historisation en théorie et dans le schéma ; ils codent sur du plat. La complexité reste côté base.
+Le lien est porté par la configuration, quatrième champ de la variable
+`GROUPES` : `rec:Recrutement:jeton:recrutement`. Ajouter ou retirer ce champ
+suffit à changer ce qu'un groupe peut traiter — sans toucher au code.
 
-→ voir [`02-modele-donnees.md`](02-modele-donnees.md)
+### PostgreSQL applique les droits, pas le code
 
-### Un SDK, pas le client Supabase
+Chaque groupe a un rôle PostgreSQL. À chaque requête, l'API lit le jeton et
+bascule sur ce rôle le temps d'une transaction :
 
-Les étudiants n'écrivent ni SQL ni appel Supabase. Une douzaine de fonctions documentées suffisent, et tiennent sur une page.
+```sql
+begin;
+  set local role grp_rec;
+  set local search_path = rec, public;
+  set local statement_timeout = '5s';
+  -- la requête du groupe
+commit;
+```
 
-L'enjeu n'est pas le confort : c'est la **taille du prompt**. Une IA à qui l'on donne une liste fermée de fonctions ne peut quasiment plus inventer de code faux.
+Le groupe est propriétaire de son schéma, lecteur du socle et des cinq autres
+schémas, et rien d'autre. Il n'y a rien à vérifier côté Python, donc rien à
+oublier de vérifier. Une requête qui tenterait d'écrire dans le socle reçoit
+`permission denied for table employees` — un message que l'étudiant lit,
+comprend, et n'oublie pas.
 
-→ voir [`04-sdk.md`](04-sdk.md)
+`SET LOCAL` ne vaut que jusqu'à la fin de la transaction : la connexion rendue
+au pool repart avec les droits du compte applicatif, sans remise en état.
 
-### La fusion par construction
+### Deux chemins d'accès, et la frontière est pédagogique
 
-Aucun étudiant ne modifie jamais un fichier partagé — ni le routeur, ni le menu, ni le layout. Tout son module tient dans `src/modules/<code>/`, décrit par un manifeste. Le socle découvre les modules au démarrage et construit la navigation seul.
+Le socle se lit par son API REST, décrite dans une spécification OpenAPI. Les
+données d'un groupe se manipulent en SQL. Ce n'est pas une incohérence, c'est
+la leçon : **on consomme un produit par son contrat d'interface, on possède son
+propre schéma.**
 
-Conséquences : leur fork tourne en autonome ; la fusion consiste à copier des dossiers ; un module cassé n'emporte pas les autres.
+Et comme tout vit dans la même base, une requête d'un groupe peut joindre ses
+tables au socle. C'est ce qui rend l'intégration inter-modules possible dès que
+chacun a de la matière.
 
-→ voir [`03-conventions-modules.md`](03-conventions-modules.md)
+### FastAPI plutôt qu'un générateur d'API
 
-### Les droits s'appliquent dans la base, pas dans le code
+La spécification OpenAPI est **le livrable le plus important pour les
+étudiants** : c'est ce qu'ils collent dans Copilot pour qu'il écrive du code
+juste. Elle doit donc être exacte, lisible et stable.
 
-L'intervenant crée tous les comptes et attribue à chacun un rôle égal au code de son module. Ce rôle vit dans une table, pas dans le jeton : les groupes s'attribuent en cours, et une cellule modifiée prend effet immédiatement.
+Avec FastAPI, elle est engendrée depuis les modèles de réponse : elle ne peut
+pas diverger du code. Un même langage porte l'API, le jeu de données, les
+règles de génération des besoins et la commande de remise à zéro.
 
-Chaque table de module reçoit deux politiques : **lecture pour tout compte connecté**, écriture pour le seul groupe propriétaire. Le Core HR est en lecture seule pour tous.
+Deux fichiers en sortent, versionnés dans le dépôt :
 
-La lecture ouverte est délibérée : c'est elle qui rend l'intégration inter-modules possible — le groupe Formation peut afficher les entretiens du groupe Évaluation.
+- `openapi.json` — la spécification complète, qui fait foi ;
+- `contrat-api.md` — la même chose en dix fois moins de place, parce qu'une
+  spécification de 90 Ko sature le contexte d'un chat IA gratuit.
 
-> **StackBlitz ne permet aucun verrouillage de fichier.** Rien n'empêche techniquement un étudiant d'éditer le dossier d'un autre groupe dans son propre fork. C'est sans conséquence : seul son dossier sera collecté en fin de journée, et la base refusera l'écriture. C'est même un excellent sujet de cours — la sécurité applicative ne se joue jamais dans l'interface.
+### Un modèle plat, exposé à plat
 
-### Une IA interchangeable
+Un SIRH de production historise les affectations et les avenants. Ici, non :
+l'historique d'un salarié tient dans la suite de ses contrats, et cela suffit
+au périmètre du cours.
 
-Le kit de prompts ne vise aucun outil en particulier : il fonctionne avec Copilot Chat, Claude.ai, ChatGPT ou Le Chat. Copilot en version gratuite est plafonné à 50 requêtes de chat par mois — un groupe épuiserait ce quota en une demi-journée. Aucun point de défaillance unique n'est acceptable le jour J : si un groupe atteint une limite, il change d'onglet.
+Ce choix a un coût — on ne saura pas dire qui occupait quel poste au 31
+décembre — et un bénéfice qui l'emporte largement : **chaque jointure épargnée
+est une requête juste de plus.** Une requête récursive sur un organigramme, ou
+une jointure temporelle sur un avenant en vigueur, est exactement ce qu'une IA
+rate, et ce qu'un étudiant non-développeur ne saura pas corriger.
 
-## Ce que la cadence mensuelle impose
+Pour la même raison, les énumérations sont des colonnes `text` avec une
+contrainte `CHECK`, pas des types PostgreSQL dédiés : on écrit
+`where contract_type = 'CDI'` et ça marche.
 
-Trois journées séparées par un mois, c'est la contrainte la plus structurante du dispositif.
+### Les besoins identifiés, et leur clé naturelle
 
-**La base doit rester debout.** Un projet Supabase gratuit se met en pause après 7 jours sans appel API, et reste restaurable 90 jours — un intervalle d'un mois passe donc sans danger. Deux précautions : un ping périodique pour qu'il ne s'endorme jamais, et surtout un `pg_dump` à chaque fin de journée, car **l'offre gratuite ne conserve aucune sauvegarde**.
+Trois règles produisent les besoins. Leurs seuils vivent dans un seul fichier,
+`api/socle/rules/seuils.py`, écrit pour être lu par les étudiants et ajusté par
+l'intervenant entre deux sprints.
 
-**Le travail étudiant doit survivre.** Un groupe qui perd son fork perd un mois. La parade est structurelle : l'unité récupérable est un **dossier**. Chaque fin de journée, chaque groupe dépose son `src/modules/<code>/` dans son canal Teams. En cas de perte, on reforke le socle et on redépose le dossier — deux minutes. C'est leur gestion de versions, sans une notion de git à apprendre.
+Chaque besoin porte une clé naturelle : `(type, salarié, poste, compétence)`.
+La commande de génération est donc **rejouable en plein cours** : elle crée les
+besoins nouveaux, rafraîchit ceux qui sont encore ouverts, et ne touche jamais
+à ceux qu'un groupe a pris en charge ou clôturés.
 
-**La fusion devient incrémentale.** Puisque les dossiers sont collectés chaque mois, le projet consolidé se maintient au fil de l'eau. Novembre et décembre redémarrent depuis lui : chaque groupe forke une application contenant déjà les modules des autres. La sidebar montre le SIRH entier, l'intégration inter-modules devient possible, et la démonstration finale cesse d'être un pari.
+### Des données déterministes, calées sur une date de référence
 
-## Ce qui reste à valider avant tout développement
+Le jeu de données est engendré par un générateur semé sur une graine fixe, et
+toutes les dates se calculent à partir de `DATE_REFERENCE` — jamais de
+l'horloge. Remis à zéro deux fois, il produit exactement les mêmes lignes, avec
+les mêmes identifiants.
 
-Un seul test conditionne l'ensemble du dispositif, et il doit être fait **depuis un poste étudiant réel** : vérifier que `*.supabase.co` et StackBlitz ne sont pas filtrés par le réseau de l'université, et qu'un compte StackBlitz se crée avec une adresse universitaire.
+Deux raisons, et la seconde est la plus importante :
 
-S'il échoue, c'est l'environnement qu'il faut revoir — pas l'architecture.
+1. La recette devient possible avant le code : un groupe peut écrire « alors
+   l'écran affiche 12 besoins de formation ouverts à Lyon » puis vérifier.
+2. Les groupes stockent des identifiants du socle dans leurs tables
+   (`besoin_id`, `employee_id`). Si une remise à zéro les décalait, leurs
+   données pointeraient dans le vide.
+
+### Pas de migrations
+
+Le socle est figé au jour 1 et les données sont fictives : il n'y aura jamais
+de migration en place à jouer. Les modèles sont la source de vérité, les tables
+en sont créées au démarrage, et toute évolution passe par une remise à zéro.
+
+Un outil de migration aurait ajouté un mode de défaillance au déploiement sans
+rien résoudre.
+
+### Aucun fichier partagé entre groupes
+
+Le menu global n'existe dans aucun fichier : il est déduit des manifestes
+trouvés dans `app/src/modules/<code>/module.js`. Un dossier déposé apparaît, un
+dossier retiré disparaît.
+
+Conséquences : le fork d'un groupe tourne en autonome, la fusion consiste à
+copier des dossiers, et un module cassé n'emporte pas les autres — chaque écran
+est chargé paresseusement derrière une barrière d'erreur, si bien que la
+démonstration finale ne peut plus être prise en otage par un groupe.
+
+### Une seule instance, partagée
+
+Les six groupes tapent la même base. C'est délibéré : c'est ce qui rend les
+dépendances entre modules visibles, et ce qui rend la démonstration finale
+crédible — tout le monde parle des mêmes salariés.
+
+Les jetons ne protègent rien, et ne cherchent pas à le faire : les données sont
+entièrement fictives. Ils identifient l'appelant et empêchent une collision
+entre groupes.

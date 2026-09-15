@@ -1,191 +1,160 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+/**
+ * La fiche d'un salarié : son identité, son poste, son parcours contractuel,
+ * ses entretiens et les besoins qui le concernent.
+ *
+ * Le patron d'un écran de DÉTAIL : on lit l'identifiant dans l'URL, on charge,
+ * on affiche. `masque: true` dans le manifeste le retire du menu.
+ */
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getEmploye, getHistoriqueRemuneration,
-         formatDate, formatEuro, formatPourcent, anciennete } from '@/socle/sdk'
+import {
+  getSalarie, getEntretiens, getBesoins,
+  formatDate, anciennete, toast,
+} from '@/socle/sdk'
 
 const route = useRoute()
 const router = useRouter()
+
 const salarie = ref(null)
-const remuneration = ref([])
+const entretiens = ref([])
+const besoins = ref([])
 const chargement = ref(true)
 
-const contratEnCours = computed(() =>
-  salarie.value?.contrats?.find(c => !c.date_fin_reelle) ?? null)
-
-const severiteAvenant = (code) =>
-  ({ INITIAL: 'secondary', PROMO: 'success', TEMPS: 'warn', CLASSIF: 'info' }[code] || 'info')
-
 onMounted(async () => {
+  const id = route.params.id
   try {
-    const id = Number(route.params.id)
-    salarie.value = await getEmploye(id)
-    remuneration.value = await getHistoriqueRemuneration(id)
+    salarie.value = await getSalarie(id)
+    ;[entretiens.value, besoins.value] = await Promise.all([
+      getEntretiens({ salarieId: id }),
+      getBesoins({ salarieId: id }),
+    ])
+  } catch (erreur) {
+    toast.erreur(erreur.message)
   } finally {
     chargement.value = false
   }
 })
+
+const severiteStatutContrat = (code) =>
+  ({ actif: 'success', termine: 'secondary', a_venir: 'info' })[code] || 'secondary'
 </script>
 
 <template>
   <div v-if="chargement" class="attente"><ProgressSpinner /></div>
 
-  <Message v-else-if="!salarie" severity="warn" :closable="false">
-    Ce salarié est introuvable.
-  </Message>
-
-  <template v-else>
-    <PageHeader :titre="salarie.nom_complet"
-                :sousTitre="`${salarie.matricule || 'sans matricule'} · ${salarie.emploi || '—'} · ${salarie.service || 'sans service'}`">
-      <Button label="Retour à la liste" icon="pi pi-arrow-left" severity="secondary" outlined
+  <template v-else-if="salarie">
+    <PageHeader :titre="salarie.full_name"
+                :sousTitre="`${salarie.matricule} · ${salarie.position_title || 'sans poste'} · ${salarie.establishment_name || '—'}`">
+      <Button label="Retour" icon="pi pi-arrow-left" severity="secondary" outlined
               @click="router.push('/corehr/salaries')" />
     </PageHeader>
 
-    <EmployeCard :employe="salarie" class="carte" />
+    <div class="cartes">
+      <StatCard titre="Ancienneté" :valeur="anciennete(salarie.seniority_months)"
+                icone="pi pi-calendar" />
+      <StatCard titre="Contrat"
+                :valeur="salarie.contract_type_label || '—'" icone="pi pi-file" />
+      <StatCard titre="Temps de travail"
+                :valeur="salarie.work_time_ratio ? `${Math.round(salarie.work_time_ratio * 100)} %` : '—'"
+                icone="pi pi-clock" />
+      <StatCard titre="Équipe directe" :valeur="salarie.direct_reports_count"
+                icone="pi pi-users" />
+    </div>
 
-    <Tabs value="0" class="onglets">
-      <TabList>
-        <Tab value="0">Identité</Tab>
-        <Tab value="1">Contrats et avenants</Tab>
-        <Tab value="2">Rémunération</Tab>
-        <Tab value="3">Affectations</Tab>
-      </TabList>
-
-      <TabPanels>
-        <!-- Identité ------------------------------------------------------- -->
-        <TabPanel value="0">
-          <dl class="identite">
-            <div><dt>Matricule</dt><dd>{{ salarie.matricule || '—' }}</dd></div>
-            <div><dt>Date de naissance</dt><dd>{{ formatDate(salarie.date_naissance, 'long') }}</dd></div>
-            <div><dt>Âge</dt><dd>{{ salarie.age ?? '—' }} ans</dd></div>
-            <div><dt>E-mail professionnel</dt><dd>{{ salarie.email_pro || '—' }}</dd></div>
-            <div><dt>E-mail personnel</dt><dd>{{ salarie.email_perso || '—' }}</dd></div>
-            <div><dt>Téléphone</dt><dd>{{ salarie.telephone || '—' }}</dd></div>
-            <div><dt>Ville</dt><dd>{{ salarie.ville || '—' }}</dd></div>
-            <div><dt>Établissement</dt><dd>{{ salarie.etablissement || '—' }}</dd></div>
-            <div><dt>Date d’entrée dans l’entreprise</dt><dd>{{ formatDate(salarie.date_entree, 'long') }}</dd></div>
-            <div><dt>Ancienneté</dt><dd>{{ anciennete(salarie.anciennete_mois) }}</dd></div>
+    <div class="grille">
+      <Card>
+        <template #title>Identité</template>
+        <template #content>
+          <dl>
+            <dt>E-mail professionnel</dt><dd>{{ salarie.email_pro }}</dd>
+            <dt>Entrée dans le groupe</dt><dd>{{ formatDate(salarie.joined_on, 'long') }}</dd>
+            <dt>Sortie</dt><dd>{{ salarie.left_on ? formatDate(salarie.left_on, 'long') : '—' }}</dd>
+            <dt>Statut</dt><dd>{{ salarie.status_label }}</dd>
+            <dt>Manager</dt>
+            <dd>
+              <a v-if="salarie.manager_id" href="#"
+                 @click.prevent="router.push(`/corehr/salaries/${salarie.manager_id}`)">
+                {{ salarie.manager_name }}
+              </a>
+              <span v-else>—</span>
+            </dd>
+            <dt>Département</dt><dd>{{ salarie.department_label || '—' }}</dd>
           </dl>
+        </template>
+      </Card>
 
-          <Message v-if="salarie.date_entree && salarie.date_debut_contrat
-                         && salarie.date_entree !== salarie.date_debut_contrat"
-                   severity="info" :closable="false">
-            L’ancienneté part de la <strong>date d’entrée dans l’entreprise</strong>
-            ({{ formatDate(salarie.date_entree) }}), pas du début du contrat en cours
-            ({{ formatDate(salarie.date_debut_contrat) }}) : cette personne a eu un
-            contrat antérieur.
-          </Message>
-        </TabPanel>
-
-        <!-- Contrats et avenants ------------------------------------------- -->
-        <TabPanel value="1">
-          <div v-for="c in salarie.contrats" :key="c.id" class="contrat">
-            <header>
-              <div>
-                <Tag :value="c.type_contrat_code" />
-                <strong>{{ c.numero }}</strong>
-                <span class="periode">
-                  du {{ formatDate(c.date_debut) }}
-                  <template v-if="c.date_fin_reelle">au {{ formatDate(c.date_fin_reelle) }}</template>
-                  <template v-else-if="c.date_fin_prevue">jusqu’au {{ formatDate(c.date_fin_prevue) }}</template>
-                  <template v-else>— en cours</template>
-                </span>
-              </div>
-              <Tag v-if="c.date_fin_reelle" :value="c.motif_sortie || 'Terminé'" severity="secondary" />
-              <Tag v-else value="En cours" severity="success" />
-            </header>
-
-            <DataTable :value="c.avenants" size="small" class="avenants">
-              <template #empty>Aucun avenant enregistré.</template>
-              <Column field="numero_ordre" header="N°" style="width: 3.5rem" />
-              <Column field="type_avenant" header="Type">
-                <template #body="{ data }">
-                  <Tag :value="data.type_avenant" :severity="severiteAvenant(data.type_avenant_code)" />
-                </template>
-              </Column>
-              <Column header="Date d’effet" style="width: 8rem">
-                <template #body="{ data }">{{ formatDate(data.date_effet) }}</template>
-              </Column>
-              <Column field="etp" header="ETP" style="width: 4.5rem" />
-              <Column field="classification" header="Classification" />
-              <Column field="coefficient" header="Coef." style="width: 4.5rem" />
-              <Column header="Salaire brut" style="width: 8rem">
-                <template #body="{ data }">{{ formatEuro(data.salaire_base_brut_mensuel) }}</template>
-              </Column>
-              <Column field="motif" header="Motif" />
-            </DataTable>
-          </div>
-        </TabPanel>
-
-        <!-- Rémunération ---------------------------------------------------- -->
-        <TabPanel value="2">
-          <Message severity="info" :closable="false" class="rappel">
-            Le salaire n’est pas une colonne qu’on écrase : c’est l’état courant d’une
-            suite d’<strong>avenants datés</strong>. C’est ce qui rend cette carrière lisible —
-            et une masse salariale calculable à une date passée.
-          </Message>
-
-          <DataTable :value="remuneration" size="small" stripedRows>
-            <template #empty>Aucun historique de rémunération.</template>
-            <Column header="Date d’effet" style="width: 8rem">
-              <template #body="{ data }">{{ formatDate(data.date_effet) }}</template>
+      <Card>
+        <template #title>Parcours dans le groupe</template>
+        <template #content>
+          <!-- L'historique d'un salarié, c'est la suite de ses contrats. -->
+          <DataTable :value="salarie.contracts" size="small" dataKey="id">
+            <template #empty>Aucun contrat.</template>
+            <Column field="contract_type_label" header="Type" />
+            <Column field="position_title" header="Poste" />
+            <Column field="establishment_name" header="Établissement" />
+            <Column header="Du">
+              <template #body="{ data }">{{ formatDate(data.start_date) }}</template>
             </Column>
-            <Column field="type_avenant" header="Événement" />
-            <Column field="etp" header="ETP" style="width: 4.5rem" />
-            <Column header="Salaire brut mensuel" style="width: 10rem">
-              <template #body="{ data }">{{ formatEuro(data.salaire) }}</template>
+            <Column header="Au">
+              <template #body="{ data }">{{ formatDate(data.end_date) }}</template>
             </Column>
-            <Column header="Évolution" style="width: 7rem">
+            <Column header="Statut">
               <template #body="{ data }">
-                <span v-if="data.evolution_pct === null" class="muet">—</span>
-                <Tag v-else :value="formatPourcent(data.evolution_pct)"
-                     :severity="data.evolution_pct > 0 ? 'success' : 'secondary'" />
+                <Tag :value="data.status_label" :severity="severiteStatutContrat(data.status)" />
               </template>
             </Column>
-            <Column field="motif" header="Motif" />
           </DataTable>
-        </TabPanel>
+        </template>
+      </Card>
 
-        <!-- Affectations ---------------------------------------------------- -->
-        <TabPanel value="3">
-          <DataTable :value="salarie.affectations" size="small" stripedRows>
-            <template #empty>Aucune affectation enregistrée.</template>
-            <Column header="Du" style="width: 8rem">
-              <template #body="{ data }">{{ formatDate(data.date_debut) }}</template>
+      <Card>
+        <template #title>Entretiens annuels</template>
+        <template #content>
+          <DataTable :value="entretiens" size="small" dataKey="id">
+            <template #empty>Aucun entretien.</template>
+            <Column field="campaign_label" header="Campagne" />
+            <Column header="Date">
+              <template #body="{ data }">{{ formatDate(data.review_date) }}</template>
             </Column>
-            <Column header="Au" style="width: 8rem">
+            <Column field="reviewer_name" header="Évaluateur" />
+            <Column field="average_achievement_rate" header="Atteinte">
               <template #body="{ data }">
-                {{ data.date_fin ? formatDate(data.date_fin) : 'en cours' }}
+                {{ data.average_achievement_rate !== null ? `${data.average_achievement_rate} %` : '—' }}
               </template>
             </Column>
-            <Column field="service" header="Service" />
-            <Column field="poste" header="Poste" />
-            <Column field="manager" header="Manager" />
-            <Column field="taux_affectation" header="Taux" style="width: 5rem" />
+            <Column field="status_label" header="Statut" />
           </DataTable>
-        </TabPanel>
-      </TabPanels>
-    </Tabs>
+        </template>
+      </Card>
+
+      <Card>
+        <template #title>Besoins identifiés le concernant</template>
+        <template #content>
+          <DataTable :value="besoins" size="small" dataKey="id">
+            <template #empty>Aucun besoin identifié.</template>
+            <Column field="need_type_label" header="Type" />
+            <Column field="skill_label" header="Compétence">
+              <template #body="{ data }">{{ data.skill_label || '—' }}</template>
+            </Column>
+            <Column field="priority_label" header="Priorité" />
+            <Column field="status_label" header="Statut" />
+            <Column field="handled_by_module" header="Pris par">
+              <template #body="{ data }">{{ data.handled_by_module || '—' }}</template>
+            </Column>
+          </DataTable>
+        </template>
+      </Card>
+    </div>
   </template>
 </template>
 
 <style scoped>
-.attente { display: grid; place-items: center; min-height: 12rem; }
-.carte { margin-bottom: 1.25rem; }
-.onglets :deep(.p-tabpanels) { background: transparent; padding: 1.25rem 0 0; }
-.identite {
-  display: grid; gap: .85rem 2rem; margin: 0 0 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-}
-.identite dt { font-size: .78rem; color: var(--p-text-muted-color); text-transform: uppercase; letter-spacing: .03em; }
-.identite dd { margin: .15rem 0 0; font-weight: 500; }
-.contrat {
-  background: var(--p-surface-0); border: 1px solid var(--p-surface-200);
-  border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
-}
-.contrat header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; flex-wrap: wrap; }
-.contrat header > div { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
-.periode { color: var(--p-text-muted-color); font-size: .85rem; }
-.rappel { margin-bottom: 1rem; }
-.muet { color: var(--p-text-muted-color); }
+.attente { display: grid; place-items: center; min-height: 40vh; }
+.cartes { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+          gap: 1rem; margin-bottom: 1.25rem; }
+.grille { display: grid; gap: 1.25rem; }
+dl { display: grid; grid-template-columns: 12rem 1fr; gap: .4rem 1rem; margin: 0; }
+dt { color: var(--p-text-muted-color); font-size: .85rem; }
+dd { margin: 0; }
 </style>

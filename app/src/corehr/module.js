@@ -1,21 +1,40 @@
-// =============================================================================
-// Manifeste du Core HR.
-//
-// Il a exactement la même forme que celui d'un module étudiant : c'est ce qui
-// rend le mécanisme uniforme. Seul `systeme: true` le distingue — il est
-// épinglé en tête de menu et ne sera jamais collecté en fin de journée.
-// =============================================================================
+/**
+ * Le manifeste du socle.
+ *
+ * C'est le seul fichier dont la FORME est imposée. Le vôtre a exactement la
+ * même, dans `src/modules/<votre code>/module.js` :
+ *
+ *   export default {
+ *     code:  'rec',                     // le code de votre groupe
+ *     label: 'Recrutement',             // ce qui s'affiche dans le menu
+ *     icon:  'pi pi-user-plus',         // une icône PrimeIcons
+ *     routes: [
+ *       { path: 'offres', label: 'Offres', component: () => import('./OffresList.vue') },
+ *     ],
+ *   }
+ *
+ * Ajouter un écran = ajouter une ligne dans `routes` et créer le fichier .vue.
+ * Le menu et les URL se construisent tout seuls : /rec/offres.
+ */
 
 export default {
   code: 'corehr',
-  label: 'Core HR',
+  label: 'Socle SIRH',
   icon: 'pi pi-database',
-  systeme: true,
   routes: [
-    { path: 'salaries',      label: 'Salariés',        component: () => import('./SalariesList.vue') },
-    { path: 'salaries/:id',  label: 'Fiche salarié',   component: () => import('./SalarieFiche.vue'), masque: true },
-    { path: 'organigramme',  label: 'Organigramme',    component: () => import('./Organigramme.vue') },
-    { path: 'postes',        label: 'Postes',          component: () => import('./Postes.vue') },
-    { path: 'pilotage',      label: 'Tableau de bord', component: () => import('./TableauDeBord.vue') },
+    { path: 'besoins', label: 'Besoins identifiés',
+      component: () => import('./BesoinsList.vue') },
+    { path: 'salaries', label: 'Salariés',
+      component: () => import('./SalariesList.vue') },
+    // `masque: true` : l'écran existe et a une URL, mais n'apparaît pas dans
+    // le menu. C'est ce qu'on fait pour une fiche atteinte depuis une liste.
+    { path: 'salaries/:id', label: 'Fiche salarié', masque: true,
+      component: () => import('./SalarieFiche.vue') },
+    { path: 'postes', label: 'Postes',
+      component: () => import('./PostesList.vue') },
+    { path: 'entretiens', label: 'Entretiens annuels',
+      component: () => import('./EntretiensList.vue') },
+    { path: 'console-sql', label: 'Console SQL',
+      component: () => import('./ConsoleSql.vue') },
   ],
 }

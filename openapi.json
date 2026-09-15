@@ -1,0 +1,3636 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Socle SIRH — Sorbonne-Hôtel",
+    "description": "\nLe référentiel RH de **Sorbonne-Hôtel**, chaîne hôtelière française de cinq\nétablissements et cent quarante salariés.\n\nCette API est le socle commun du cours : les six modules développés par les\ngroupes s'y branchent. Elle expose le Core HR (établissements, départements,\npostes, salariés, contrats, compétences) et l'Évaluation (campagnes,\nentretiens annuels, objectifs, évaluations de compétences, aspirations), et\nelle en dérive les **besoins identifiés**, qui sont le pivot du dispositif.\n\n## La règle d'or\n\nLes modules **ne modifient jamais** les données du socle. Ils le lisent, et\ncréent leurs propres données dans leur schéma PostgreSQL, via `/sql`.\n\nSeule exception : faire passer un besoin identifié d'`ouvert` à\n`pris_en_charge`, puis à `cloture`, via `PATCH /besoins/{id}`. C'est ce qui\nrend visible, lors des démonstrations, la chaîne entre l'évaluation et l'action.\n\n## S'identifier\n\nToutes les requêtes portent le jeton du groupe :\n\n    Authorization: Bearer <votre jeton>\n\nIl ne protège rien — les données sont fictives. Il sert à savoir quel groupe\nappelle quoi, et à ce qu'un groupe ne puisse pas écrire chez un autre.\n\n## Vos propres tables\n\n`POST /sql` exécute vos requêtes sous le rôle PostgreSQL de votre groupe.\nVous êtes propriétaire du schéma qui porte le code de votre module : vous y\ncréez vos tables, vous les lisez, vous les écrivez. Vous lisez le socle et les\nschémas des cinq autres groupes, sans jamais pouvoir les modifier.\n\n## Les dates\n\nLe socle ne regarde jamais l'horloge. Tout est calculé par rapport à une date\nde référence, que renvoie `GET /date-reference`. C'est ce qui permet de remettre\nles données à zéro entre deux sprints et de retrouver exactement le même jeu.\n",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/referentiels": {
+      "get": {
+        "tags": [
+          "Référentiels"
+        ],
+        "summary": "Toutes les énumérations du socle, avec leur libellé français",
+        "operationId": "lister_referentiels_referentiels_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "$ref": "#/components/schemas/ValeurReferentiel"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response Lister Referentiels Referentiels Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/date-reference": {
+      "get": {
+        "tags": [
+          "Référentiels"
+        ],
+        "summary": "La date sur laquelle tout le socle est calé",
+        "description": "Le socle ne regarde jamais l'horloge.\n\nAncienneté, contrats arrivant à échéance, campagne en cours : tout est\ncalculé par rapport à cette date. C'est ce qui rend le jeu de données\nreproductible d'une remise à zéro à l'autre.",
+        "operationId": "lire_date_reference_date_reference_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Lire Date Reference Date Reference Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/etablissements": {
+      "get": {
+        "tags": [
+          "Core HR"
+        ],
+        "summary": "Les cinq hôtels de la chaîne",
+        "operationId": "lister_etablissements_etablissements_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EtablissementOut"
+                  },
+                  "type": "array",
+                  "title": "Response Lister Etablissements Etablissements Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/departements": {
+      "get": {
+        "tags": [
+          "Core HR"
+        ],
+        "summary": "Les départements, filtrables par établissement",
+        "operationId": "lister_departements_departements_get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtre sur un hôtel",
+              "title": "Etablissement Id"
+            },
+            "description": "Filtre sur un hôtel"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DepartementOut"
+                  },
+                  "title": "Response Lister Departements Departements Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/postes": {
+      "get": {
+        "tags": [
+          "Core HR"
+        ],
+        "summary": "Les postes, avec effectif cible et effectif réel",
+        "operationId": "lister_postes_postes_get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Etablissement Id"
+            }
+          },
+          {
+            "name": "departement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Departement Id"
+            }
+          },
+          {
+            "name": "famille",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Famille de métier, ex. « Cuisine »",
+              "title": "Famille"
+            },
+            "description": "Famille de métier, ex. « Cuisine »"
+          },
+          {
+            "name": "vacants",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "À true, ne renvoie que les postes dont l'effectif réel est inférieur à l'effectif cible",
+              "title": "Vacants"
+            },
+            "description": "À true, ne renvoie que les postes dont l'effectif réel est inférieur à l'effectif cible"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosteOut"
+                  },
+                  "title": "Response Lister Postes Postes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/postes/{poste_id}": {
+      "get": {
+        "tags": [
+          "Core HR"
+        ],
+        "summary": "Un poste et les compétences qu'il requiert",
+        "operationId": "lire_poste_postes__poste_id__get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "poste_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Poste Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/competences": {
+      "get": {
+        "tags": [
+          "Core HR"
+        ],
+        "summary": "Le référentiel de compétences",
+        "operationId": "lister_competences_competences_get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "categorie",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SkillCategory"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Categorie"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompetenceOut"
+                  },
+                  "title": "Response Lister Competences Competences Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/salaries": {
+      "get": {
+        "tags": [
+          "Core HR"
+        ],
+        "summary": "Les salariés, avec leur contrat en cours",
+        "operationId": "lister_salaries_salaries_get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Etablissement Id"
+            }
+          },
+          {
+            "name": "departement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Departement Id"
+            }
+          },
+          {
+            "name": "poste_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Poste Id"
+            }
+          },
+          {
+            "name": "manager_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "L'équipe directe d'un manager",
+              "title": "Manager Id"
+            },
+            "description": "L'équipe directe d'un manager"
+          },
+          {
+            "name": "statut",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EmployeeStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "actif",
+              "title": "Statut"
+            }
+          },
+          {
+            "name": "type_contrat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContractType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type Contrat"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Recherche sur le nom, le matricule ou l'e-mail",
+              "title": "Q"
+            },
+            "description": "Recherche sur le nom, le matricule ou l'e-mail"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SalarieOut"
+                  },
+                  "title": "Response Lister Salaries Salaries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/salaries/{salarie_id}": {
+      "get": {
+        "tags": [
+          "Core HR"
+        ],
+        "summary": "Un salarié et son parcours contractuel",
+        "operationId": "lire_salarie_salaries__salarie_id__get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "salarie_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Salarie Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalarieDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contrats": {
+      "get": {
+        "tags": [
+          "Core HR"
+        ],
+        "summary": "Les contrats, filtrables par échéance",
+        "operationId": "lister_contrats_contrats_get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Etablissement Id"
+            }
+          },
+          {
+            "name": "poste_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Poste Id"
+            }
+          },
+          {
+            "name": "salarie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Salarie Id"
+            }
+          },
+          {
+            "name": "type_contrat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContractType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type Contrat"
+            }
+          },
+          {
+            "name": "statut",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContractStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Statut"
+            }
+          },
+          {
+            "name": "fin_avant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Ne renvoie que les contrats dont le terme est antérieur à cette date. Sert à repérer les échéances proches.",
+              "examples": [
+                "2026-12-31"
+              ],
+              "title": "Fin Avant"
+            },
+            "description": "Ne renvoie que les contrats dont le terme est antérieur à cette date. Sert à repérer les échéances proches."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContratOut"
+                  },
+                  "title": "Response Lister Contrats Contrats Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campagnes": {
+      "get": {
+        "tags": [
+          "Évaluation"
+        ],
+        "summary": "Les campagnes d'entretiens annuels",
+        "operationId": "lister_campagnes_campagnes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CampagneOut"
+                  },
+                  "type": "array",
+                  "title": "Response Lister Campagnes Campagnes Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/entretiens": {
+      "get": {
+        "tags": [
+          "Évaluation"
+        ],
+        "summary": "Les entretiens annuels",
+        "operationId": "lister_entretiens_entretiens_get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "campagne_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campagne Id"
+            }
+          },
+          {
+            "name": "salarie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Salarie Id"
+            }
+          },
+          {
+            "name": "evaluateur_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Les entretiens menés par un manager",
+              "title": "Evaluateur Id"
+            },
+            "description": "Les entretiens menés par un manager"
+          },
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Etablissement Id"
+            }
+          },
+          {
+            "name": "statut",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ReviewStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Statut"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntretienOut"
+                  },
+                  "title": "Response Lister Entretiens Entretiens Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/entretiens/{entretien_id}": {
+      "get": {
+        "tags": [
+          "Évaluation"
+        ],
+        "summary": "Un entretien, avec ses objectifs, ses évaluations et ses aspirations",
+        "operationId": "lire_entretien_entretiens__entretien_id__get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entretien_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Entretien Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntretienDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/aspirations": {
+      "get": {
+        "tags": [
+          "Évaluation"
+        ],
+        "summary": "Les souhaits d'évolution exprimés en entretien",
+        "operationId": "lister_aspirations_aspirations_get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "salarie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Salarie Id"
+            }
+          },
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Etablissement Id"
+            }
+          },
+          {
+            "name": "type_aspiration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AspirationType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type Aspiration"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AspirationOut"
+                  },
+                  "title": "Response Lister Aspirations Aspirations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/besoins": {
+      "get": {
+        "tags": [
+          "Besoins identifiés"
+        ],
+        "summary": "Les besoins identifiés, filtrables par type et par statut",
+        "operationId": "lister_besoins_besoins_get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type_besoin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/NeedType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "recrutement, formation ou mobilite",
+              "title": "Type Besoin"
+            },
+            "description": "recrutement, formation ou mobilite"
+          },
+          {
+            "name": "statut",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/NeedStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Statut"
+            }
+          },
+          {
+            "name": "priorite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/NeedPriority"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Priorite"
+            }
+          },
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Etablissement Id"
+            }
+          },
+          {
+            "name": "departement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Departement Id"
+            }
+          },
+          {
+            "name": "poste_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Poste Id"
+            }
+          },
+          {
+            "name": "salarie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Salarie Id"
+            }
+          },
+          {
+            "name": "competence_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Competence Id"
+            }
+          },
+          {
+            "name": "module",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Le code du groupe ayant pris le besoin en charge",
+              "title": "Module"
+            },
+            "description": "Le code du groupe ayant pris le besoin en charge"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BesoinOut"
+                  },
+                  "title": "Response Lister Besoins Besoins Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/besoins/{besoin_id}": {
+      "get": {
+        "tags": [
+          "Besoins identifiés"
+        ],
+        "summary": "Un besoin identifié",
+        "operationId": "lire_besoin_besoins__besoin_id__get",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "besoin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Besoin Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BesoinOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Besoins identifiés"
+        ],
+        "summary": "Faire évoluer le statut d'un besoin — la seule écriture autorisée sur le socle",
+        "description": "Réservé aux trois modules qui consomment des besoins, et chacun ne traite\nque son type : Recrutement les besoins de recrutement, Formation ceux de\nformation, Mobilité ceux de mobilité.\n\nLe module n'est pas à renseigner : il est déduit du jeton.",
+        "operationId": "modifier_besoin_besoins__besoin_id__patch",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "besoin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Besoin Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BesoinPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BesoinOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sql": {
+      "post": {
+        "tags": [
+          "SQL des modules"
+        ],
+        "summary": "Exécuter une requête sur le schéma de votre module",
+        "description": "Une seule instruction SQL, avec ses paramètres nommés.\n\nLes paramètres s'écrivent `:nom` et se passent dans `params`. Ne jamais\nconcaténer une valeur saisie par l'utilisateur dans la requête : c'est\nexactement ce que ces paramètres évitent.\n\n    {\n      \"query\": \"select * from candidats where statut = :statut order by nom\",\n      \"params\": { \"statut\": \"nouveau\" }\n    }\n\nLa recherche par motif fonctionne de la même façon :\n\n    {\n      \"query\": \"select * from candidats where nom ilike :motif\",\n      \"params\": { \"motif\": \"%mar%\" }\n    }\n\nUne instruction qui ne renvoie pas de lignes (`insert`, `update`, `delete`,\n`create table`) renvoie `rows: []` et le nombre de lignes touchées.",
+        "operationId": "executer_sql_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequeteSql"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReponseSql"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/sql/script": {
+      "post": {
+        "tags": [
+          "SQL des modules"
+        ],
+        "summary": "Exécuter plusieurs instructions — pour appliquer votre schema.sql",
+        "description": "Plusieurs instructions séparées par des points-virgules, sans paramètres.\n\nC'est l'endpoint qu'utilise la console SQL du socle pour appliquer le\nfichier `schema.sql` d'un module. Tout passe dans une seule transaction :\nsi une instruction échoue, aucune n'est appliquée.",
+        "operationId": "executer_script_sql_script_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScriptSql"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReponseScriptSql"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/admin/reset": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Remettre les données du socle à zéro",
+        "description": "Vide le socle, le recharge à l'identique, puis régénère les besoins.\n\nLes schémas des six groupes ne sont pas touchés : le travail des étudiants\nsurvit à une remise à zéro. Les identifiants du socle repartent à 1 et le\njeu de données est reproductible, donc les références logiques stockées par\nles modules (`besoin_id`, `employee_id`…) restent valables.",
+        "operationId": "reinitialiser_admin_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Reinitialiser Admin Reset Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/admin/besoins/generer": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Rejouer les trois règles de génération des besoins",
+        "description": "À lancer après avoir ajusté un seuil dans `rules/seuils.py`.\n\nLes besoins pris en charge ou clôturés par un groupe ne sont jamais\nmodifiés : la commande peut être relancée en plein sprint.",
+        "operationId": "generer_besoins_admin_besoins_generer_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Generer Besoins Admin Besoins Generer Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/admin/modules/{code}/reset": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Vider et recréer le schéma d'un groupe",
+        "description": "Supprime toutes les tables d'un groupe et recrée son schéma, vide.\n\nLe groupe recrée ensuite ses tables depuis la console SQL.",
+        "operationId": "reinitialiser_schema_admin_modules__code__reset_post",
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Reinitialiser Schema Admin Modules  Code  Reset Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/etat": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Compter les lignes de chaque table du socle",
+        "description": "Le contrôle de cohérence, à passer après chaque remise à zéro.",
+        "operationId": "etat_admin_etat_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Etat Admin Etat Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Jeton de groupe": []
+          }
+        ]
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "Référentiels"
+        ],
+        "summary": "Vérifier que l'API répond",
+        "description": "Le seul endpoint qui ne demande pas de jeton — sert de sonde de santé.",
+        "operationId": "accueil__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Accueil  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AspirationOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "review_id": {
+            "type": "integer",
+            "title": "Review Id"
+          },
+          "employee_id": {
+            "type": "integer",
+            "title": "Employee Id"
+          },
+          "employee_name": {
+            "type": "string",
+            "title": "Employee Name"
+          },
+          "aspiration_type": {
+            "$ref": "#/components/schemas/AspirationType"
+          },
+          "aspiration_type_label": {
+            "type": "string",
+            "title": "Aspiration Type Label"
+          },
+          "target_establishment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Establishment Id"
+          },
+          "target_establishment_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Establishment Name"
+          },
+          "target_position_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Position Id"
+          },
+          "target_position_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Position Title"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "review_id",
+          "employee_id",
+          "employee_name",
+          "aspiration_type",
+          "aspiration_type_label",
+          "target_establishment_id",
+          "target_establishment_name",
+          "target_position_id",
+          "target_position_title",
+          "comment"
+        ],
+        "title": "AspirationOut"
+      },
+      "AspirationType": {
+        "type": "string",
+        "enum": [
+          "mobilite_geographique",
+          "changement_poste",
+          "evolution_hierarchique",
+          "montee_competences"
+        ],
+        "title": "AspirationType"
+      },
+      "BesoinOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "need_type": {
+            "$ref": "#/components/schemas/NeedType"
+          },
+          "need_type_label": {
+            "type": "string",
+            "title": "Need Type Label"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/NeedPriority"
+          },
+          "priority_label": {
+            "type": "string",
+            "title": "Priority Label"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NeedStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
+          },
+          "origin": {
+            "type": "string",
+            "title": "Origin"
+          },
+          "detected_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Detected On"
+          },
+          "employee_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee Id"
+          },
+          "employee_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee Name"
+          },
+          "matricule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matricule"
+          },
+          "position_id": {
+            "type": "integer",
+            "title": "Position Id"
+          },
+          "position_title": {
+            "type": "string",
+            "title": "Position Title"
+          },
+          "job_family": {
+            "type": "string",
+            "title": "Job Family"
+          },
+          "hierarchy_level": {
+            "type": "integer",
+            "title": "Hierarchy Level"
+          },
+          "department_id": {
+            "type": "integer",
+            "title": "Department Id"
+          },
+          "department_label": {
+            "type": "string",
+            "title": "Department Label"
+          },
+          "establishment_id": {
+            "type": "integer",
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "type": "string",
+            "title": "Establishment Name"
+          },
+          "establishment_city": {
+            "type": "string",
+            "title": "Establishment City"
+          },
+          "skill_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill Id"
+          },
+          "skill_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill Code"
+          },
+          "skill_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill Label"
+          },
+          "review_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Id"
+          },
+          "handled_by_module": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handled By Module"
+          },
+          "handled_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handled On"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "need_type",
+          "need_type_label",
+          "priority",
+          "priority_label",
+          "status",
+          "status_label",
+          "origin",
+          "detected_on",
+          "employee_id",
+          "employee_name",
+          "matricule",
+          "position_id",
+          "position_title",
+          "job_family",
+          "hierarchy_level",
+          "department_id",
+          "department_label",
+          "establishment_id",
+          "establishment_name",
+          "establishment_city",
+          "skill_id",
+          "skill_code",
+          "skill_label",
+          "review_id",
+          "handled_by_module",
+          "handled_on",
+          "comment"
+        ],
+        "title": "BesoinOut"
+      },
+      "BesoinPatch": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/NeedStatus"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "BesoinPatch",
+        "description": "La seule écriture autorisée aux groupes sur le socle.\n\nLe module qui prend le besoin en charge n'est pas à renseigner : il est\ndéduit du jeton, pour qu'un groupe ne puisse pas écrire au nom d'un autre."
+      },
+      "CampagneOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "opens_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Opens On"
+          },
+          "closes_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Closes On"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CampaignStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
+          },
+          "reviews_count": {
+            "type": "integer",
+            "title": "Reviews Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "year",
+          "opens_on",
+          "closes_on",
+          "status",
+          "status_label",
+          "reviews_count"
+        ],
+        "title": "CampagneOut"
+      },
+      "CampaignStatus": {
+        "type": "string",
+        "enum": [
+          "preparee",
+          "ouverte",
+          "cloturee"
+        ],
+        "title": "CampaignStatus"
+      },
+      "CompetenceAttendueOut": {
+        "properties": {
+          "skill_id": {
+            "type": "integer",
+            "title": "Skill Id"
+          },
+          "skill_code": {
+            "type": "string",
+            "title": "Skill Code"
+          },
+          "skill_label": {
+            "type": "string",
+            "title": "Skill Label"
+          },
+          "category": {
+            "$ref": "#/components/schemas/SkillCategory"
+          },
+          "category_label": {
+            "type": "string",
+            "title": "Category Label"
+          },
+          "required_level": {
+            "type": "integer",
+            "title": "Required Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "skill_id",
+          "skill_code",
+          "skill_label",
+          "category",
+          "category_label",
+          "required_level"
+        ],
+        "title": "CompetenceAttendueOut"
+      },
+      "CompetenceOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "category": {
+            "$ref": "#/components/schemas/SkillCategory"
+          },
+          "category_label": {
+            "type": "string",
+            "title": "Category Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "label",
+          "category",
+          "category_label"
+        ],
+        "title": "CompetenceOut"
+      },
+      "ContractStatus": {
+        "type": "string",
+        "enum": [
+          "actif",
+          "termine",
+          "a_venir"
+        ],
+        "title": "ContractStatus"
+      },
+      "ContractType": {
+        "type": "string",
+        "enum": [
+          "CDI",
+          "CDD",
+          "APPRENTISSAGE",
+          "SAISONNIER",
+          "EXTRA"
+        ],
+        "title": "ContractType"
+      },
+      "ContratOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "employee_id": {
+            "type": "integer",
+            "title": "Employee Id"
+          },
+          "employee_name": {
+            "type": "string",
+            "title": "Employee Name"
+          },
+          "matricule": {
+            "type": "string",
+            "title": "Matricule"
+          },
+          "contract_type": {
+            "$ref": "#/components/schemas/ContractType"
+          },
+          "contract_type_label": {
+            "type": "string",
+            "title": "Contract Type Label"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "work_time_ratio": {
+            "type": "number",
+            "title": "Work Time Ratio"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContractStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
+          },
+          "days_to_end": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days To End"
+          },
+          "position_id": {
+            "type": "integer",
+            "title": "Position Id"
+          },
+          "position_title": {
+            "type": "string",
+            "title": "Position Title"
+          },
+          "department_id": {
+            "type": "integer",
+            "title": "Department Id"
+          },
+          "department_label": {
+            "type": "string",
+            "title": "Department Label"
+          },
+          "establishment_id": {
+            "type": "integer",
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "type": "string",
+            "title": "Establishment Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "employee_name",
+          "matricule",
+          "contract_type",
+          "contract_type_label",
+          "start_date",
+          "end_date",
+          "work_time_ratio",
+          "status",
+          "status_label",
+          "days_to_end",
+          "position_id",
+          "position_title",
+          "department_id",
+          "department_label",
+          "establishment_id",
+          "establishment_name"
+        ],
+        "title": "ContratOut"
+      },
+      "DepartementOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "establishment_id": {
+            "type": "integer",
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "type": "string",
+            "title": "Establishment Name"
+          },
+          "establishment_city": {
+            "type": "string",
+            "title": "Establishment City"
+          },
+          "headcount": {
+            "type": "integer",
+            "title": "Headcount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "label",
+          "establishment_id",
+          "establishment_name",
+          "establishment_city",
+          "headcount"
+        ],
+        "title": "DepartementOut"
+      },
+      "EmployeeStatus": {
+        "type": "string",
+        "enum": [
+          "actif",
+          "sorti"
+        ],
+        "title": "EmployeeStatus"
+      },
+      "EntretienDetailOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "campaign_id": {
+            "type": "integer",
+            "title": "Campaign Id"
+          },
+          "campaign_label": {
+            "type": "string",
+            "title": "Campaign Label"
+          },
+          "employee_id": {
+            "type": "integer",
+            "title": "Employee Id"
+          },
+          "employee_name": {
+            "type": "string",
+            "title": "Employee Name"
+          },
+          "matricule": {
+            "type": "string",
+            "title": "Matricule"
+          },
+          "position_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Title"
+          },
+          "establishment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment Name"
+          },
+          "reviewer_id": {
+            "type": "integer",
+            "title": "Reviewer Id"
+          },
+          "reviewer_name": {
+            "type": "string",
+            "title": "Reviewer Name"
+          },
+          "review_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Review Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "goals_count": {
+            "type": "integer",
+            "title": "Goals Count"
+          },
+          "average_achievement_rate": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Achievement Rate"
+          },
+          "skill_gaps_count": {
+            "type": "integer",
+            "title": "Skill Gaps Count"
+          },
+          "aspirations_count": {
+            "type": "integer",
+            "title": "Aspirations Count"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectifOut"
+            },
+            "type": "array",
+            "title": "Goals"
+          },
+          "skill_assessments": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationCompetenceOut"
+            },
+            "type": "array",
+            "title": "Skill Assessments"
+          },
+          "aspirations": {
+            "items": {
+              "$ref": "#/components/schemas/AspirationOut"
+            },
+            "type": "array",
+            "title": "Aspirations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "campaign_id",
+          "campaign_label",
+          "employee_id",
+          "employee_name",
+          "matricule",
+          "position_title",
+          "establishment_id",
+          "establishment_name",
+          "reviewer_id",
+          "reviewer_name",
+          "review_date",
+          "status",
+          "status_label",
+          "summary",
+          "goals_count",
+          "average_achievement_rate",
+          "skill_gaps_count",
+          "aspirations_count",
+          "goals",
+          "skill_assessments",
+          "aspirations"
+        ],
+        "title": "EntretienDetailOut"
+      },
+      "EntretienOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "campaign_id": {
+            "type": "integer",
+            "title": "Campaign Id"
+          },
+          "campaign_label": {
+            "type": "string",
+            "title": "Campaign Label"
+          },
+          "employee_id": {
+            "type": "integer",
+            "title": "Employee Id"
+          },
+          "employee_name": {
+            "type": "string",
+            "title": "Employee Name"
+          },
+          "matricule": {
+            "type": "string",
+            "title": "Matricule"
+          },
+          "position_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Title"
+          },
+          "establishment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment Name"
+          },
+          "reviewer_id": {
+            "type": "integer",
+            "title": "Reviewer Id"
+          },
+          "reviewer_name": {
+            "type": "string",
+            "title": "Reviewer Name"
+          },
+          "review_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Review Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "goals_count": {
+            "type": "integer",
+            "title": "Goals Count"
+          },
+          "average_achievement_rate": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Achievement Rate"
+          },
+          "skill_gaps_count": {
+            "type": "integer",
+            "title": "Skill Gaps Count"
+          },
+          "aspirations_count": {
+            "type": "integer",
+            "title": "Aspirations Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "campaign_id",
+          "campaign_label",
+          "employee_id",
+          "employee_name",
+          "matricule",
+          "position_title",
+          "establishment_id",
+          "establishment_name",
+          "reviewer_id",
+          "reviewer_name",
+          "review_date",
+          "status",
+          "status_label",
+          "summary",
+          "goals_count",
+          "average_achievement_rate",
+          "skill_gaps_count",
+          "aspirations_count"
+        ],
+        "title": "EntretienOut"
+      },
+      "EtablissementOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "city": {
+            "type": "string",
+            "title": "City"
+          },
+          "postal_code": {
+            "type": "string",
+            "title": "Postal Code"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "category": {
+            "type": "integer",
+            "title": "Category"
+          },
+          "opened_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Opened On"
+          },
+          "is_head_office": {
+            "type": "boolean",
+            "title": "Is Head Office"
+          },
+          "headcount": {
+            "type": "integer",
+            "title": "Headcount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "city",
+          "postal_code",
+          "address",
+          "category",
+          "opened_on",
+          "is_head_office",
+          "headcount"
+        ],
+        "title": "EtablissementOut"
+      },
+      "EvaluationCompetenceOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "review_id": {
+            "type": "integer",
+            "title": "Review Id"
+          },
+          "skill_id": {
+            "type": "integer",
+            "title": "Skill Id"
+          },
+          "skill_code": {
+            "type": "string",
+            "title": "Skill Code"
+          },
+          "skill_label": {
+            "type": "string",
+            "title": "Skill Label"
+          },
+          "category": {
+            "$ref": "#/components/schemas/SkillCategory"
+          },
+          "assessed_level": {
+            "type": "integer",
+            "title": "Assessed Level"
+          },
+          "required_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Level"
+          },
+          "gap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gap"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "review_id",
+          "skill_id",
+          "skill_code",
+          "skill_label",
+          "category",
+          "assessed_level",
+          "required_level",
+          "gap",
+          "comment"
+        ],
+        "title": "EvaluationCompetenceOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "NeedPriority": {
+        "type": "string",
+        "enum": [
+          "haute",
+          "moyenne",
+          "basse"
+        ],
+        "title": "NeedPriority"
+      },
+      "NeedStatus": {
+        "type": "string",
+        "enum": [
+          "ouvert",
+          "pris_en_charge",
+          "cloture"
+        ],
+        "title": "NeedStatus"
+      },
+      "NeedType": {
+        "type": "string",
+        "enum": [
+          "recrutement",
+          "formation",
+          "mobilite"
+        ],
+        "title": "NeedType"
+      },
+      "ObjectifOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "review_id": {
+            "type": "integer",
+            "title": "Review Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "achievement_rate": {
+            "type": "integer",
+            "title": "Achievement Rate"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "review_id",
+          "label",
+          "achievement_rate",
+          "comment"
+        ],
+        "title": "ObjectifOut"
+      },
+      "PosteDetailOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "job_family": {
+            "type": "string",
+            "title": "Job Family"
+          },
+          "hierarchy_level": {
+            "type": "integer",
+            "title": "Hierarchy Level"
+          },
+          "target_headcount": {
+            "type": "integer",
+            "title": "Target Headcount"
+          },
+          "current_headcount": {
+            "type": "integer",
+            "title": "Current Headcount"
+          },
+          "vacancies": {
+            "type": "integer",
+            "title": "Vacancies"
+          },
+          "department_id": {
+            "type": "integer",
+            "title": "Department Id"
+          },
+          "department_label": {
+            "type": "string",
+            "title": "Department Label"
+          },
+          "establishment_id": {
+            "type": "integer",
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "type": "string",
+            "title": "Establishment Name"
+          },
+          "establishment_city": {
+            "type": "string",
+            "title": "Establishment City"
+          },
+          "required_skills": {
+            "items": {
+              "$ref": "#/components/schemas/CompetenceAttendueOut"
+            },
+            "type": "array",
+            "title": "Required Skills"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "title",
+          "job_family",
+          "hierarchy_level",
+          "target_headcount",
+          "current_headcount",
+          "vacancies",
+          "department_id",
+          "department_label",
+          "establishment_id",
+          "establishment_name",
+          "establishment_city",
+          "required_skills"
+        ],
+        "title": "PosteDetailOut"
+      },
+      "PosteOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "job_family": {
+            "type": "string",
+            "title": "Job Family"
+          },
+          "hierarchy_level": {
+            "type": "integer",
+            "title": "Hierarchy Level"
+          },
+          "target_headcount": {
+            "type": "integer",
+            "title": "Target Headcount"
+          },
+          "current_headcount": {
+            "type": "integer",
+            "title": "Current Headcount"
+          },
+          "vacancies": {
+            "type": "integer",
+            "title": "Vacancies"
+          },
+          "department_id": {
+            "type": "integer",
+            "title": "Department Id"
+          },
+          "department_label": {
+            "type": "string",
+            "title": "Department Label"
+          },
+          "establishment_id": {
+            "type": "integer",
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "type": "string",
+            "title": "Establishment Name"
+          },
+          "establishment_city": {
+            "type": "string",
+            "title": "Establishment City"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "title",
+          "job_family",
+          "hierarchy_level",
+          "target_headcount",
+          "current_headcount",
+          "vacancies",
+          "department_id",
+          "department_label",
+          "establishment_id",
+          "establishment_name",
+          "establishment_city"
+        ],
+        "title": "PosteOut"
+      },
+      "ReponseScriptSql": {
+        "properties": {
+          "statements": {
+            "type": "integer",
+            "title": "Statements"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "statements",
+          "message"
+        ],
+        "title": "ReponseScriptSql"
+      },
+      "ReponseSql": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "columns",
+          "rows",
+          "row_count",
+          "truncated"
+        ],
+        "title": "ReponseSql"
+      },
+      "RequeteSql": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "RequeteSql"
+      },
+      "ReviewStatus": {
+        "type": "string",
+        "enum": [
+          "planifie",
+          "realise",
+          "valide"
+        ],
+        "title": "ReviewStatus"
+      },
+      "SalarieDetailOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "matricule": {
+            "type": "string",
+            "title": "Matricule"
+          },
+          "civility": {
+            "type": "string",
+            "title": "Civility"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email_pro": {
+            "type": "string",
+            "title": "Email Pro"
+          },
+          "joined_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Joined On"
+          },
+          "left_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left On"
+          },
+          "seniority_months": {
+            "type": "integer",
+            "title": "Seniority Months"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EmployeeStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
+          },
+          "manager_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Id"
+          },
+          "manager_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Name"
+          },
+          "contract_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Id"
+          },
+          "contract_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContractType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contract_type_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Type Label"
+          },
+          "contract_start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Start Date"
+          },
+          "contract_end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract End Date"
+          },
+          "work_time_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Time Ratio"
+          },
+          "position_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Id"
+          },
+          "position_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Title"
+          },
+          "job_family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Family"
+          },
+          "hierarchy_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hierarchy Level"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "department_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Label"
+          },
+          "establishment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment Name"
+          },
+          "establishment_city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment City"
+          },
+          "direct_reports_count": {
+            "type": "integer",
+            "title": "Direct Reports Count"
+          },
+          "contracts": {
+            "items": {
+              "$ref": "#/components/schemas/ContratOut"
+            },
+            "type": "array",
+            "title": "Contracts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "matricule",
+          "civility",
+          "first_name",
+          "last_name",
+          "full_name",
+          "email_pro",
+          "joined_on",
+          "left_on",
+          "seniority_months",
+          "status",
+          "status_label",
+          "manager_id",
+          "manager_name",
+          "contract_id",
+          "contract_type",
+          "contract_type_label",
+          "contract_start_date",
+          "contract_end_date",
+          "work_time_ratio",
+          "position_id",
+          "position_title",
+          "job_family",
+          "hierarchy_level",
+          "department_id",
+          "department_label",
+          "establishment_id",
+          "establishment_name",
+          "establishment_city",
+          "direct_reports_count",
+          "contracts"
+        ],
+        "title": "SalarieDetailOut"
+      },
+      "SalarieOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "matricule": {
+            "type": "string",
+            "title": "Matricule"
+          },
+          "civility": {
+            "type": "string",
+            "title": "Civility"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email_pro": {
+            "type": "string",
+            "title": "Email Pro"
+          },
+          "joined_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Joined On"
+          },
+          "left_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left On"
+          },
+          "seniority_months": {
+            "type": "integer",
+            "title": "Seniority Months"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EmployeeStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
+          },
+          "manager_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Id"
+          },
+          "manager_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Name"
+          },
+          "contract_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Id"
+          },
+          "contract_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContractType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contract_type_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Type Label"
+          },
+          "contract_start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Start Date"
+          },
+          "contract_end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract End Date"
+          },
+          "work_time_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Time Ratio"
+          },
+          "position_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Id"
+          },
+          "position_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Title"
+          },
+          "job_family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Family"
+          },
+          "hierarchy_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hierarchy Level"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "department_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Label"
+          },
+          "establishment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment Id"
+          },
+          "establishment_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment Name"
+          },
+          "establishment_city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Establishment City"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "matricule",
+          "civility",
+          "first_name",
+          "last_name",
+          "full_name",
+          "email_pro",
+          "joined_on",
+          "left_on",
+          "seniority_months",
+          "status",
+          "status_label",
+          "manager_id",
+          "manager_name",
+          "contract_id",
+          "contract_type",
+          "contract_type_label",
+          "contract_start_date",
+          "contract_end_date",
+          "work_time_ratio",
+          "position_id",
+          "position_title",
+          "job_family",
+          "hierarchy_level",
+          "department_id",
+          "department_label",
+          "establishment_id",
+          "establishment_name",
+          "establishment_city"
+        ],
+        "title": "SalarieOut"
+      },
+      "ScriptSql": {
+        "properties": {
+          "script": {
+            "type": "string",
+            "title": "Script"
+          }
+        },
+        "type": "object",
+        "required": [
+          "script"
+        ],
+        "title": "ScriptSql"
+      },
+      "SkillCategory": {
+        "type": "string",
+        "enum": [
+          "technique",
+          "relationnel",
+          "langue",
+          "management"
+        ],
+        "title": "SkillCategory"
+      },
+      "ValeurReferentiel": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "label"
+        ],
+        "title": "ValeurReferentiel"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "Jeton de groupe": {
+        "type": "http",
+        "description": "Le jeton remis à votre groupe, en en-tête `Authorization: Bearer <jeton>`.",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

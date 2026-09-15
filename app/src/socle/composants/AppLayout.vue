@@ -1,28 +1,19 @@
 <script setup>
-// Le shell : barre latérale, barre du haut, zone de contenu.
-// AUCUN étudiant ne modifie ce fichier — le menu est déduit des manifestes.
-import { ref, computed } from 'vue'
+/**
+ * La coque de l'application.
+ *
+ * Le menu montre le SIRH entier : le socle, puis les six modules du cours.
+ * Un seul est ouvrable — le vôtre. Les cinq autres sont grisés : ils
+ * appartiennent à d'autres groupes, et vous n'avez aucun droit dessus,
+ * ni dans l'application ni dans la base.
+ */
+import { ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { modules } from '../modules'
-import { useSession, deconnexion, choisirProfilRH } from '../session'
+import { modules, monModule } from '../modules'
 import BarriereErreur from './BarriereErreur.vue'
-import EmployeSelect from './EmployeSelect.vue'
 
 const route = useRoute()
-const session = useSession()
 const ouvert = ref(false)
-
-const PROFILS = [
-  { code: 'RH',      libelle: 'RH',       icone: 'pi pi-verified' },
-  { code: 'MANAGER', libelle: 'Manager',  icone: 'pi pi-sitemap' },
-  { code: 'SALARIE', libelle: 'Salarié',  icone: 'pi pi-user' },
-]
-
-const monModule = computed(() => session.module)
-const estMonModule = (code) => code === monModule.value
-
-async function changerProfil(code) { await choisirProfilRH(code) }
-async function changerEmploye(id)  { await choisirProfilRH(session.profilRH, id) }
 </script>
 
 <template>
@@ -31,32 +22,71 @@ async function changerEmploye(id)  { await choisirProfilRH(session.profilRH, id)
       <div class="marque">
         <i class="pi pi-building-columns" />
         <div>
-          <strong>SIRH Meridien</strong>
-          <small>Master SIRH · Paris 1</small>
+          <strong>Sorbonne-Hôtel</strong>
+          <small>SIRH · Master 2 · Paris 1</small>
         </div>
       </div>
 
       <nav>
+        <!-- La porte d'entrée du logiciel, hors de tout module. -->
+        <RouterLink to="/accueil" class="lien accueil"
+                    :class="{ actif: route.path === '/accueil' }"
+                    @click="ouvert = false">
+          <i class="pi pi-home" />
+          <span>Accueil</span>
+        </RouterLink>
+
         <div v-for="m in modules" :key="m.code" class="groupe">
-          <!-- Niveau 1 : un module = un dossier. Le socle le place ici. -->
-          <div class="titre-groupe" :class="{ mien: estMonModule(m.code) }">
-            <i :class="m.icon" />
-            <span>{{ m.label }}</span>
-            <Tag v-if="estMonModule(m.code)" value="votre module" severity="success" />
-          </div>
-          <!-- Niveau 2 : les groupes ajoutent ces entrées dans leur module.js. -->
-          <RouterLink
-            v-for="r in m.routes.filter(x => !x.masque)" :key="r.path"
-            :to="`/${m.code}/${r.path}`"
-            class="lien"
-            :class="{ actif: route.path === `/${m.code}/${r.path}` }"
-            @click="ouvert = false"
-          >{{ r.label }}</RouterLink>
+          <!-- Le socle : consultation, pour tout le monde. -->
+          <template v-if="m.socle">
+            <div class="titre-groupe socle">
+              <i :class="m.icon" />
+              <span>{{ m.label }}</span>
+              <Tag value="lecture seule" severity="secondary" />
+            </div>
+            <RouterLink
+              v-for="r in m.routes.filter(x => !x.masque)" :key="r.path"
+              :to="`/${m.code}/${r.path}`" class="lien"
+              :class="{ actif: route.path === `/${m.code}/${r.path}` }"
+              @click="ouvert = false"
+            >{{ r.label }}</RouterLink>
+          </template>
+
+          <!-- Votre module : le seul sur lequel vous travaillez. -->
+          <template v-else-if="m.mien">
+            <div class="titre-groupe mien">
+              <i :class="m.icon" />
+              <span>{{ m.label }}</span>
+              <Tag value="votre groupe" severity="success" />
+            </div>
+            <RouterLink
+              v-for="r in m.routes.filter(x => !x.masque)" :key="r.path"
+              :to="`/${m.code}/${r.path}`" class="lien"
+              :class="{ actif: route.path === `/${m.code}/${r.path}` }"
+              @click="ouvert = false"
+            >{{ r.label }}</RouterLink>
+            <p v-if="!m.routes.length" class="a-creer">
+              Aucun écran pour l’instant. Créez
+              <code>src/modules/{{ m.code }}/module.js</code>.
+            </p>
+          </template>
+
+          <!-- Les cinq autres : visibles, pour situer votre module dans
+               l'ensemble, mais fermés. -->
+          <template v-else>
+            <div class="titre-groupe verrouille"
+                 v-tooltip.right="`${m.perimetre}. Module d’un autre groupe : vous n’y avez pas accès.`">
+              <i :class="m.icon" />
+              <span>{{ m.label }}</span>
+              <i class="pi pi-lock cadenas" />
+            </div>
+          </template>
         </div>
       </nav>
 
       <div class="pied">
-        <small>{{ modules.length - 1 }} module{{ modules.length > 2 ? 's' : '' }} branché{{ modules.length > 2 ? 's' : '' }}</small>
+        <small v-if="monModule">Vous êtes le groupe <strong>{{ monModule.label }}</strong>.</small>
+        <small v-else class="alerte">Aucun module attribué — vérifiez app/.env.</small>
       </div>
     </aside>
 
@@ -72,35 +102,7 @@ async function changerEmploye(id)  { await choisirProfilRH(session.profilRH, id)
         </div>
 
         <div class="outils">
-          <!-- Profil FONCTIONNEL simulé : change ce qui s'affiche, jamais les droits. -->
-          <div class="profil-rh" v-tooltip.bottom="'Profil simulé : change ce que l’écran affiche, pas vos droits'">
-            <Button
-              v-for="p in PROFILS" :key="p.code"
-              :label="p.libelle" :icon="p.icone" size="small"
-              :severity="session.profilRH === p.code ? 'primary' : 'secondary'"
-              :outlined="session.profilRH !== p.code"
-              @click="changerProfil(p.code)"
-            />
-          </div>
-
-          <EmployeSelect
-            v-if="session.profilRH !== 'RH'"
-            class="incarner"
-            :modelValue="session.employe?.personne_id ?? null"
-            placeholder="Incarner un salarié…"
-            @update:modelValue="changerEmploye"
-          />
-
-          <Divider layout="vertical" />
-
-          <div class="compte">
-            <span class="nom">{{ session.profil?.prenom }} {{ session.profil?.nom }}</span>
-            <Tag v-if="monModule" :value="monModule" severity="info" />
-            <Tag v-else value="sans module" severity="warn"
-                 v-tooltip.bottom="'Votre compte n’est rattaché à aucun groupe : vous ne pouvez rien écrire.'" />
-          </div>
-          <Button icon="pi pi-sign-out" text severity="secondary"
-                  aria-label="Se déconnecter" @click="deconnexion" />
+          <Tag v-if="monModule" :value="monModule.label" severity="info" />
         </div>
       </header>
 
@@ -120,7 +122,7 @@ async function changerEmploye(id)  { await choisirProfilRH(session.profilRH, id)
 .shell { display: flex; min-height: 100vh; background: var(--p-surface-100); }
 
 .sidebar {
-  width: 16rem; flex: none; background: var(--p-surface-0);
+  width: 17rem; flex: none; background: var(--p-surface-0);
   border-right: 1px solid var(--p-surface-200);
   display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
 }
@@ -130,21 +132,36 @@ async function changerEmploye(id)  { await choisirProfilRH(session.profilRH, id)
 .marque small { color: var(--p-text-muted-color); font-size: .72rem; }
 
 nav { flex: 1; overflow-y: auto; padding: .75rem .5rem; }
-.groupe { margin-bottom: 1rem; }
+.groupe { margin-bottom: .85rem; }
 .titre-groupe {
   display: flex; align-items: center; gap: .5rem; padding: .4rem .6rem;
   font-size: .72rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: .04em; color: var(--p-text-muted-color);
+  letter-spacing: .03em; color: var(--p-text-muted-color);
 }
+.titre-groupe span { flex: 1; text-transform: none; font-size: .8rem; letter-spacing: 0; }
 .titre-groupe.mien { color: var(--p-primary-color); }
-.titre-groupe :deep(.p-tag) { font-size: .6rem; padding: .05rem .3rem; }
+.titre-groupe.verrouille { opacity: .42; cursor: not-allowed; }
+.titre-groupe.verrouille .cadenas { font-size: .7rem; }
+.titre-groupe :deep(.p-tag) { font-size: .58rem; padding: .05rem .3rem; }
+
 .lien {
-  display: block; padding: .45rem .75rem .45rem 1.85rem; border-radius: 7px;
+  display: block; padding: .45rem .75rem .45rem 1.95rem; border-radius: 7px;
   color: var(--p-text-color); text-decoration: none; font-size: .875rem;
 }
 .lien:hover { background: var(--p-surface-100); }
+.lien.accueil {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .6rem; margin-bottom: .85rem; font-weight: 500;
+}
+.lien.accueil i { font-size: .9rem; }
 .lien.actif { background: var(--p-primary-50); color: var(--p-primary-700); font-weight: 500; }
+.a-creer {
+  margin: .2rem .6rem; font-size: .75rem; color: var(--p-text-muted-color); line-height: 1.5;
+}
+.a-creer code { font-size: .72rem; }
+
 .pied { padding: .75rem 1rem; border-top: 1px solid var(--p-surface-200); color: var(--p-text-muted-color); }
+.pied .alerte { color: var(--p-red-500); }
 
 .principal { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar {
@@ -155,11 +172,7 @@ nav { flex: 1; overflow-y: auto; padding: .75rem .5rem; }
 .burger { display: none; }
 .fil { font-size: .85rem; color: var(--p-text-muted-color); display: flex; align-items: center; gap: .35rem; }
 .fil strong { color: var(--p-text-color); }
-.outils { margin-left: auto; display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
-.profil-rh { display: flex; gap: .25rem; }
-.incarner { min-width: 15rem; }
-.compte { display: flex; align-items: center; gap: .4rem; font-size: .85rem; }
-.compte .nom { font-weight: 500; }
+.outils { margin-left: auto; display: flex; align-items: center; gap: .6rem; }
 
 .contenu { padding: 1.5rem; flex: 1; max-width: 100%; }
 .voile { display: none; }
@@ -172,7 +185,6 @@ nav { flex: 1; overflow-y: auto; padding: .75rem .5rem; }
   .sidebar.ouvert { transform: none; }
   .burger { display: inline-flex; }
   .voile { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 20; }
-  .incarner { min-width: 100%; order: 10; }
   .contenu { padding: 1rem; }
 }
 </style>

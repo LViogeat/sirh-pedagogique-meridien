@@ -1,162 +1,133 @@
-// =============================================================================
-// Lecture du référentiel Core HR.
-//
-// Ces fonctions lisent les VUES APLATIES de la base, jamais les tables
-// historisées. Toute la complexité temporelle — quel contrat est en cours,
-// quel avenant est en vigueur, depuis quand — est résolue côté PostgreSQL.
-//
-// Une donnée qui manque ici est une DEMANDE D'ÉVOLUTION, pas une jointure.
-// =============================================================================
+/**
+ * La lecture du socle.
+ *
+ * Une fonction par endpoint, un objet de filtres facultatifs. Aucun de ces
+ * appels ne peut modifier le socle : l'API ne l'autoriserait pas.
+ *
+ * La seule exception est en bas de ce fichier : le statut d'un besoin.
+ */
 
-import { supabase } from './supabase'
+import { get, patch } from './api'
 
-/** Nettoie une saisie avant de la passer à un filtre PostgREST `or`. */
-function assainir(texte) {
-  return String(texte).replace(/[,()*%\\]/g, ' ').trim()
-}
+// ── Structure ────────────────────────────────────────────────────────────────
 
-function verifier({ data, error }) {
-  if (error) throw new Error(error.message)
-  return data
-}
+/** Les cinq hôtels, avec leur effectif présent. */
+export const getEtablissements = () => get('/etablissements')
+
+/** Les départements. `{ etablissementId }` pour un seul hôtel. */
+export const getDepartements = ({ etablissementId } = {}) =>
+  get('/departements', { etablissement_id: etablissementId })
 
 /**
- * Les salariés présents aujourd'hui.
- * Tous les filtres sont facultatifs et se combinent.
+ * Les postes, avec effectif cible et effectif réel.
+ * `{ vacants: true }` ne renvoie que ceux qui sont en sous-effectif.
  */
-export async function getEmployes(filtres = {}) {
-  let q = supabase.from('v_employes_actifs').select('*')
+export const getPostes = ({ etablissementId, departementId, famille, vacants } = {}) =>
+  get('/postes', {
+    etablissement_id: etablissementId, departement_id: departementId,
+    famille, vacants,
+  })
 
-  if (filtres.serviceId)       q = q.eq('service_id', filtres.serviceId)
-  if (filtres.etablissementId) q = q.eq('etablissement_id', filtres.etablissementId)
-  if (filtres.typeContrat)     q = q.eq('type_contrat_code', filtres.typeContrat)
-  if (filtres.managerId)       q = q.eq('manager_id', filtres.managerId)
+/** Un poste, avec les compétences qu'il requiert et le niveau attendu. */
+export const getPoste = (id) => get(`/postes/${id}`)
 
-  const recherche = assainir(filtres.recherche || '')
-  if (recherche) {
-    q = q.or(`nom_complet.ilike.%${recherche}%,matricule.ilike.%${recherche}%,email_pro.ilike.%${recherche}%`)
-  }
+/** Le référentiel de compétences. `{ categorie: 'langue' }` pour en filtrer une. */
+export const getCompetences = ({ categorie } = {}) => get('/competences', { categorie })
 
-  return verifier(await q.order('nom').order('prenom'))
-}
+// ── Salariés et contrats ─────────────────────────────────────────────────────
 
-/** Un salarié, avec tout son historique : contrats, avenants, affectations. */
-export async function getEmploye(personneId) {
-  const base = verifier(await supabase
-    .from('v_employes_actifs').select('*').eq('personne_id', personneId).maybeSingle())
+/**
+ * Les salariés, avec leur contrat en cours déjà aplati sur la ligne.
+ * Par défaut, seuls les salariés présents : passez `{ statut: 'sorti' }`
+ * pour les anciens.
+ */
+export const getSalaries = ({ etablissementId, departementId, posteId, managerId,
+                              statut, typeContrat, q } = {}) =>
+  get('/salaries', {
+    etablissement_id: etablissementId, departement_id: departementId,
+    poste_id: posteId, manager_id: managerId, statut, type_contrat: typeContrat, q,
+  })
 
-  const identite = base || verifier(await supabase
-    .from('v_personnes').select('*').eq('personne_id', personneId).maybeSingle())
+/** Un salarié, avec son parcours contractuel complet. */
+export const getSalarie = (id) => get(`/salaries/${id}`)
 
-  if (!identite) return null
+/**
+ * Les contrats. `{ finAvant: '2026-12-31' }` repère les échéances proches —
+ * c'est le filtre dont le groupe Recrutement a besoin.
+ */
+export const getContrats = ({ etablissementId, posteId, salarieId,
+                              typeContrat, statut, finAvant } = {}) =>
+  get('/contrats', {
+    etablissement_id: etablissementId, poste_id: posteId, salarie_id: salarieId,
+    type_contrat: typeContrat, statut, fin_avant: finAvant,
+  })
 
-  const contrats = verifier(await supabase
-    .from('contrats')
-    .select('*, ref_type_contrat(libelle), ref_motif_sortie(libelle), avenants(*, ref_type_avenant(libelle))')
-    .eq('personne_id', personneId)
-    .order('date_debut', { ascending: false }))
+// ── Évaluation ───────────────────────────────────────────────────────────────
 
-  const affectations = verifier(await supabase
-    .from('affectations')
-    .select('*, unites_organisationnelles(libelle), postes(libelle)')
-    .eq('personne_id', personneId)
-    .order('date_debut', { ascending: false }))
+export const getCampagnes = () => get('/campagnes')
 
-  // Le manager est une auto-référence sur personnes : on résout les noms à part,
-  // c'est plus lisible qu'une jointure nommée PostgREST.
-  const idsManagers = [...new Set(affectations.map(a => a.manager_personne_id).filter(Boolean))]
-  let noms = {}
-  if (idsManagers.length) {
-    const lignes = verifier(await supabase
-      .from('v_personnes').select('personne_id, nom_complet').in('personne_id', idsManagers))
-    noms = Object.fromEntries(lignes.map(l => [l.personne_id, l.nom_complet]))
-  }
+/** Les entretiens annuels. */
+export const getEntretiens = ({ campagneId, salarieId, evaluateurId,
+                                etablissementId, statut } = {}) =>
+  get('/entretiens', {
+    campagne_id: campagneId, salarie_id: salarieId, evaluateur_id: evaluateurId,
+    etablissement_id: etablissementId, statut,
+  })
 
-  return {
-    ...identite,
-    contrats: contrats.map(c => ({
-      ...c,
-      type_contrat: c.ref_type_contrat?.libelle,
-      motif_sortie: c.ref_motif_sortie?.libelle,
-      avenants: (c.avenants || [])
-        .map(a => ({ ...a, type_avenant: a.ref_type_avenant?.libelle }))
-        .sort((a, b) => a.numero_ordre - b.numero_ordre),
-    })),
-    affectations: affectations.map(a => ({
-      ...a,
-      service: a.unites_organisationnelles?.libelle,
-      poste: a.postes?.libelle,
-      manager: noms[a.manager_personne_id] || null,
-    })),
-  }
-}
+/** Un entretien, avec ses objectifs, ses évaluations de compétences et ses aspirations. */
+export const getEntretien = (id) => get(`/entretiens/${id}`)
 
-/** La carrière salariale : contrat initial, augmentations, promotions. */
-export async function getHistoriqueRemuneration(personneId) {
-  return verifier(await supabase
-    .from('v_historique_remuneration').select('*')
-    .eq('personne_id', personneId)
-    .order('contrat_id').order('numero_ordre'))
-}
+/** Les souhaits d'évolution exprimés en entretien. */
+export const getAspirations = ({ salarieId, etablissementId, typeAspiration } = {}) =>
+  get('/aspirations', {
+    salarie_id: salarieId, etablissement_id: etablissementId,
+    type_aspiration: typeAspiration,
+  })
 
-/** L'organisation. Par défaut, seulement les services ; sinon tout l'arbre. */
-export async function getServices({ toutesUnites = false } = {}) {
-  let q = supabase.from('v_organigramme').select('*')
-  if (!toutesUnites) q = q.eq('type_unite', 'service')
-  return verifier(await q.order('service'))
-}
+// ── Besoins identifiés ───────────────────────────────────────────────────────
 
-/** Les postes. `{ vacants: true }` ne renvoie que les positions non pourvues. */
-export async function getPostes({ vacants = false, serviceId = null } = {}) {
-  let q = supabase.from('v_postes').select('*')
-  if (vacants)   q = q.eq('vacant', true)
-  if (serviceId) q = q.eq('service_id', serviceId)
-  return verifier(await q.order('service').order('libelle'))
-}
+/**
+ * Les besoins identifiés — le pivot du socle.
+ *
+ *   getBesoins({ typeBesoin: 'formation', statut: 'ouvert' })
+ */
+export const getBesoins = ({ typeBesoin, statut, priorite, etablissementId,
+                             departementId, posteId, salarieId, competenceId,
+                             module } = {}) =>
+  get('/besoins', {
+    type_besoin: typeBesoin, statut, priorite,
+    etablissement_id: etablissementId, departement_id: departementId,
+    poste_id: posteId, salarie_id: salarieId, competence_id: competenceId, module,
+  })
 
-export async function getEtablissements() {
-  return verifier(await supabase
-    .from('etablissements').select('id, code, nom, ville').order('nom'))
-}
+export const getBesoin = (id) => get(`/besoins/${id}`)
 
-/** Toutes les personnes connues, salariées ou non (statut : Salarié / Ancien salarié / Externe). */
-export async function getPersonnes({ statut = null, recherche = '' } = {}) {
-  let q = supabase.from('v_personnes').select('*')
-  if (statut) q = q.eq('statut', statut)
-  const r = assainir(recherche)
-  if (r) q = q.or(`nom_complet.ilike.%${r}%,email_perso.ilike.%${r}%`)
-  return verifier(await q.order('nom_complet'))
-}
+/**
+ * LA SEULE ÉCRITURE AUTORISÉE SUR LE SOCLE.
+ *
+ * Un besoin avance : ouvert → pris en charge → clôturé. Votre module est
+ * déduit du jeton : personne ne peut prendre un besoin au nom d'un autre
+ * groupe, et un besoin pris par un autre groupe vous sera refusé.
+ */
+export const prendreEnChargeBesoin = (id, commentaire = null) =>
+  patch(`/besoins/${id}`, { status: 'pris_en_charge', comment: commentaire })
 
-/** Effectif et ETP agrégés par service. */
-export async function getEffectifParService() {
-  return verifier(await supabase
-    .from('v_effectif_par_service').select('*')
-    .eq('type_unite', 'service').order('effectif', { ascending: false }))
-}
+export const cloturerBesoin = (id, commentaire = null) =>
+  patch(`/besoins/${id}`, { status: 'cloture', comment: commentaire })
 
-/** Entrées et sorties par mois sur 36 mois — la base du turnover. */
-export async function getMouvements() {
-  return verifier(await supabase.from('v_mouvements').select('*').order('mois'))
-}
+/** Relâcher un besoin pris par erreur : il redevient disponible. */
+export const relacherBesoin = (id) => patch(`/besoins/${id}`, { status: 'ouvert' })
 
-const REFERENTIELS = {
-  civilite:      'ref_civilite',
-  type_contrat:  'ref_type_contrat',
-  motif_cdd:     'ref_motif_cdd',
-  motif_sortie:  'ref_motif_sortie',
-  csp:           'ref_csp',
-  type_avenant:  'ref_type_avenant',
-}
+// ── Référentiels ─────────────────────────────────────────────────────────────
 
-/** Une liste de référence : getRef('type_contrat') → [{ code, libelle }, …] */
-export async function getRef(nom) {
-  const table = REFERENTIELS[nom]
-  if (!table) {
-    throw new Error(
-      `Référentiel inconnu : « ${nom} ». Valeurs possibles : ${Object.keys(REFERENTIELS).join(', ')}.`
-    )
-  }
-  return verifier(await supabase
-    .from(table).select('code, libelle').eq('actif', true).order('ordre'))
-}
+/**
+ * Toutes les listes de valeurs en un appel :
+ *
+ *   const refs = await getReferentiels()
+ *   refs.type_contrat  // [{ code: 'CDI', label: 'CDI' }, …]
+ */
+export const getReferentiels = () => get('/referentiels')
+
+/** La date sur laquelle tout le socle est calé. Le socle ne lit jamais l'horloge. */
+export const getDateReference = () =>
+  get('/date-reference').then((r) => r.date_reference)

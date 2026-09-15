@@ -27,15 +27,6 @@ export function anciennete(mois) {
   return reste ? `${partAns} et ${reste} mois` : partAns
 }
 
-/** formatEuro(2450.5) → '2 450,50 €' */
-export function formatEuro(valeur, { decimales = 2 } = {}) {
-  if (valeur === null || valeur === undefined || valeur === '') return '—'
-  return Number(valeur).toLocaleString('fr-FR', {
-    style: 'currency', currency: 'EUR',
-    minimumFractionDigits: decimales, maximumFractionDigits: decimales,
-  })
-}
-
 export function formatNombre(valeur, decimales = 0) {
   if (valeur === null || valeur === undefined) return '—'
   return Number(valeur).toLocaleString('fr-FR', {

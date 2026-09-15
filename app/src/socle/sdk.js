@@ -1,37 +1,27 @@
-// =============================================================================
-// LE SDK — tout ce dont un module a besoin, en un seul import.
-//
-//   import { getEmployes, useTable, useSession, formatDate } from '@/socle/sdk'
-//
-// Les composants du socle (<PageHeader>, <StatCard>, <EmployeSelect>,
-// <EmployeCard>) et ceux de PrimeVue (<DataTable>, <Button>, <Dialog>…)
-// s'utilisent SANS import : ils sont enregistrés globalement.
-//
-// Vous n'avez donc jamais besoin d'écrire d'appel à Supabase ni de SQL.
-// =============================================================================
+/**
+ * Le SDK du socle — tout ce qu'un écran a le droit d'appeler.
+ *
+ *   import { getBesoins, sql, formatDate } from '@/socle/sdk'
+ *
+ * Si une fonction n'est pas listée ici, elle n'existe pas pour vous.
+ */
 
 export {
-  getEmployes,
-  getEmploye,
-  getHistoriqueRemuneration,
-  getServices,
-  getPostes,
-  getEtablissements,
-  getPersonnes,
-  getEffectifParService,
-  getMouvements,
-  getRef,
+  // Structure
+  getEtablissements, getDepartements, getPostes, getPoste, getCompetences,
+  // Salariés
+  getSalaries, getSalarie, getContrats,
+  // Évaluation
+  getCampagnes, getEntretiens, getEntretien, getAspirations,
+  // Besoins identifiés
+  getBesoins, getBesoin,
+  prendreEnChargeBesoin, cloturerBesoin, relacherBesoin,
+  // Référentiels
+  getReferentiels, getDateReference,
 } from './corehr'
 
-export { useTable } from './useTable'
+export { sql, sqlComplet, sqlScript, insert, update, remove, useQuery } from './sql'
 
-export { useSession, choisirProfilRH } from './session'
+export { formatDate, formatNombre, formatPourcent, anciennete, toast } from './format'
 
-export {
-  formatDate,
-  formatEuro,
-  formatNombre,
-  formatPourcent,
-  anciennete,
-  toast,
-} from './format'
+export { MODULE_CODE } from './config'

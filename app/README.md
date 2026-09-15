@@ -1,77 +1,78 @@
-# Le socle applicatif
+# Le front du socle
 
-Vue 3 + PrimeVue, conçu pour StackBlitz. C'est le projet que les étudiants forkent.
+Vue 3 + PrimeVue. C'est l'application que chaque groupe fait tourner dans son
+instance de code-server, et dans laquelle il ajoute son module.
 
-## Démarrer
-
-1. Renseigner `src/socle/config.js` avec l'URL et la clé `anon` du projet Supabase.
-   **C'est le seul fichier à modifier pour connecter l'application.**
-2. `npm install` puis `npm run dev`.
-
-Sur StackBlitz, l'étape 2 est automatique : il ne reste que le fichier de configuration.
-
-Pour pointer ailleurs sans toucher à ce fichier suivi par git — c'est ce que fait
-`scripts/demo-locale.sh` — poser un `app/.env.local`, que git ignore :
-
-```
-VITE_SUPABASE_URL=http://127.0.0.1:54321
-VITE_SUPABASE_ANON_KEY=...
+```bash
+npm install
+npm run dev
 ```
 
-## Ce qu'un groupe a le droit de faire
+## Configuration
 
-Créer des fichiers dans **`src/modules/<son-code>/`** — et rien d'autre.
+Un fichier `.env` à la racine de `app/`, trois lignes, différentes d'un groupe
+à l'autre :
 
 ```
-src/modules/rec/
-  module.js          ← manifeste : code, label, icon, routes
-  OffresList.vue     ← un fichier .vue = un écran
+VITE_API_URL=https://sirh-api.exemple.fr
+VITE_API_TOKEN=le-jeton-de-votre-groupe
+VITE_MODULE_CODE=rec
 ```
-
-Ajouter une page = ajouter une ligne dans `routes` et créer le fichier.
-Le menu et le routeur se mettent à jour seuls : **aucun fichier partagé n'est
-jamais modifié**, ce qui rend les conflits impossibles et la fusion gratuite.
-
-Le module `demo` est l'implémentation de référence à recopier :
-`TachesList.vue` montre liste, formulaire, création, modification, suppression ;
-`ExempleCoreHR.vue` montre chaque appel du SDK.
-
-## Le SDK
-
-```js
-import { getEmployes, useTable, useSession, formatDate, toast } from '@/socle/sdk'
-```
-
-Les composants PrimeVue (`<DataTable>`, `<Dialog>`…) et ceux du socle
-(`<PageHeader>`, `<StatCard>`, `<EmployeSelect>`, `<EmployeCard>`)
-s'utilisent **sans import** : ils sont enregistrés globalement.
-
-L'antisèche complète : [`../docs/04-sdk.md`](../docs/04-sdk.md).
-
-## Deux points d'attention
-
-**PrimeVue est verrouillé en 4.5.x.** La version 5 est passée sous licence
-commerciale et affiche un bandeau « Invalid PrimeUI License » sur chaque écran.
-Les versions sont donc épinglées avec `~` : ne pas les faire monter de majeure.
-
-**L'overlay d'erreur de Vite est désactivé** (`vite.config.js`). Il recouvrait
-toute l'application, menu compris. Une erreur s'affiche désormais dans l'écran
-concerné, avec le détail technique à coller à l'IA — et le reste du SIRH
-continue de fonctionner.
 
 ## Structure
 
 ```
 src/
-  socle/            jamais modifié par les étudiants
-    config.js       ← l'URL et la clé Supabase
-    sdk.js          ← le point d'entrée unique
-    corehr.js       lecture du référentiel
-    useTable.js     CRUD sur les tables du module
-    session.js      compte réel + profil RH simulé
-    modules.js      auto-découverte des manifestes
-    router.js       routes construites depuis les manifestes
-    composants/     shell, connexion, barrière d'erreur, composants partagés
-  corehr/           les écrans du référentiel
-  modules/          un dossier par groupe
+  socle/              ← ne jamais modifier
+    sdk.js               tout ce qu'un écran a le droit d'appeler
+    corehr.js            la lecture du socle
+    sql.js               vos propres tables : sql, insert, update, useQuery
+    api.js               le transport
+    format.js            formatDate, anciennete, toast
+    modules.js           découverte automatique des modules
+    router.js            routes + barrière d'erreur par écran
+    groupes.js           les six modules du cours : nom, périmètre, type de besoin
+    composants/
+      AccueilGeneral.vue   la page d'accueil du logiciel
+      AccueilModule.vue    la page d'accueil de VOTRE module — fournie par le socle
+      AppLayout, PageHeader, StatCard…
+
+  corehr/             ← les écrans de référence, à lire et à copier
+    BesoinsList.vue      L'ÉCRAN DE RÉFÉRENCE, commenté ligne à ligne
+    SalariesList.vue     liste + recherche + filtres liés
+    SalarieFiche.vue     le patron d'un écran de détail
+    PostesList.vue       liste + détail en boîte de dialogue
+    EntretiensList.vue   liste + détail imbriqué
+    ConsoleSql.vue       votre console SQL
+
+  modules/            ← LA SEULE ZONE ÉTUDIANTE, vide au départ
+    <votre code>/
+      module.js          le manifeste : le menu en découle
+      schema.sql         le SQL de vos tables, pour pouvoir le rejouer
+      *.vue              vos écrans
 ```
+
+## Deux pages que vous n'écrivez pas
+
+**L'accueil du logiciel** (`/accueil`) et **l'accueil de votre module**
+(`/<votre code>/accueil`) sont fournis par le socle. Le second dit simplement
+où vous en êtes : vos écrans, vos tables.
+
+Toutes les autres pages de votre module sont les vôtres — il n'y en a aucune
+au départ.
+
+## Ajouter un écran
+
+1. Créer le fichier `.vue` dans `src/modules/<votre code>/`.
+2. Ajouter une ligne dans le `routes` de votre `module.js`.
+
+Le menu et l'URL se construisent tout seuls. Rien d'autre à toucher.
+
+## Par où commencer
+
+Ouvrez [`src/corehr/BesoinsList.vue`](src/corehr/BesoinsList.vue). Il est
+commenté section par section, et il fait tout ce que fait un écran de liste
+d'un SIRH. C'est le fichier à copier dans votre chat IA quand vous demandez
+le vôtre.
+
+Le guide complet : [`../README-ETUDIANTS.md`](../README-ETUDIANTS.md).

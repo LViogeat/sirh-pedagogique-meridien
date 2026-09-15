@@ -1,0 +1,38 @@
+# Monte le socle en local : la base, l'API, et rien d'autre.
+# Le front se lance à part avec « npm run dev » dans app/.
+#
+#   docker compose up -d --build
+#   open http://localhost:8000/docs
+#
+# En production, Coolify déploie ces deux services séparément — voir
+# docs/02-deploiement-coolify.md.
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: sirh
+      POSTGRES_PASSWORD: sirh
+      POSTGRES_DB: sirh
+    ports: ["5433:5432"]   # 5433 côté hôte : 5432 est souvent déjà pris
+    volumes: ["donnees:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sirh"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://sirh:sirh@db:5432/sirh
+      DATE_REFERENCE: "2026-09-15"
+      JETON_ADMIN: jeton-admin
+      ORIGINES_AUTORISEES: "*"
+    ports: ["8000:8000"]
+
+volumes:
+  donnees:

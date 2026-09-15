@@ -1,20 +1,15 @@
-// =============================================================================
-// LE SEUL FICHIER À RENSEIGNER POUR CONNECTER L'APPLICATION À LA BASE.
-//
-// Ces deux valeurs sont PUBLIQUES par nature : elles vivent dans le navigateur
-// de chaque utilisateur. Elles ne protègent rien — ce sont les politiques RLS
-// de la base qui protègent les données, et le fait d'être connecté.
-//
-// La clé service_role, elle, ne doit JAMAIS figurer ici.
-// =============================================================================
+/**
+ * Les trois valeurs qui changent d'un groupe à l'autre.
+ *
+ * Elles viennent du fichier `.env` à la racine de `app/`. Chaque instance de
+ * code-server a le sien, avec le jeton et le code de son groupe — il n'y a
+ * donc rien à modifier dans le code.
+ */
 
-export const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL || 'https://VOTRE-PROJET.supabase.co'
+export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000')
+  .replace(/\/+$/, '')
 
-export const SUPABASE_ANON_KEY =
-  import.meta.env.VITE_SUPABASE_ANON_KEY || 'VOTRE-CLE-ANON'
+export const API_TOKEN = import.meta.env.VITE_API_TOKEN || 'jeton-rec'
 
-// Les deux variables d'environnement permettent de pointer ailleurs sans
-// modifier ce fichier — c'est ce qu'utilise scripts/demo-locale.sh, via un
-// app/.env.local que git ignore. Sur StackBlitz, seules les valeurs
-// ci-dessus comptent : il n'y a pas de fichier d'environnement à gérer.
+/** Le code de votre module — c'est aussi le nom de votre schéma PostgreSQL. */
+export const MODULE_CODE = import.meta.env.VITE_MODULE_CODE || 'rec'
