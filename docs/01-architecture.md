@@ -6,7 +6,8 @@
 
 Faire produire six modules d'un SIRH par dix-neuf étudiants **non-développeurs**,
 en trois jours, par sprints d'environ deux heures de production réelle, avec
-pour seul outil une IA en conversation et du copier-coller.
+pour seul outil une IA en conversation et du copier-coller. Ils n'installent
+rien : le dépôt s'ouvre dans StackBlitz, et l'API du socle est déployée.
 
 Le code n'est pas l'objectif : c'est le support. Ce que les étudiants doivent
 emporter, c'est la capacité à lire un modèle de données, exprimer un besoin
@@ -19,7 +20,7 @@ Toute l'architecture découle de cette phrase.
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  code-server ×6 — une instance par groupe, un sous-domaine chacune  │
+│  StackBlitz ×6 — un fork par groupe, Vite dans leur navigateur      │
 │                                                                     │
 │   app/src/socle/      app/src/corehr/      app/src/modules/rec/     │
 │   ├ SDK               ├ Besoins            ├ module.js              │

@@ -13,7 +13,7 @@ groupes. Chaque groupe développe un module RH qui se branche sur ce socle.
 | **Pivot** | les **besoins identifiés** — recrutement, formation, mobilité |
 | **API** | FastAPI + PostgreSQL, spécification OpenAPI complète |
 | **Front** | Vue 3 + PrimeVue, six écrans de référence |
-| **Cible** | un VPS unique piloté par Coolify |
+| **Déploiement** | API sur un VPS · postes étudiants dans StackBlitz |
 
 ---
 
@@ -35,16 +35,29 @@ charge le jeu de démonstration. Il n'y a aucune commande à lancer ensuite.
 Ajoutez `app/.env` avec `VITE_API_URL=http://localhost:8000` pour que le front
 local tape votre API locale plutôt que celle du serveur.
 
-**Le poste d'un groupe**, dans StackBlitz : pas de Docker, pas de base de
-données. Ils ne lancent que le front, qui appelle l'API déployée.
+**Le poste d'un groupe** : pas de Docker, pas de base de données, rien à
+installer. StackBlitz exécute Vite dans le navigateur et le dépôt s'y ouvre
+directement sur le dossier de l'application :
 
-```bash
-cd app && npm install && npm run dev
+```
+https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/main/app
 ```
 
-Chaque groupe crée son `app/.env` à partir de `app/.env.example` : son jeton et
-le code de son module, rien d'autre. L'URL de l'API est déjà connue de
-l'application. Tant que ce fichier manque, un écran le leur dit.
+Chaque groupe fait son fork, puis crée un fichier `.env` à partir de
+`.env.example`, avec deux lignes — son jeton et le code de son module :
+
+```
+VITE_API_TOKEN=667c885ab05157e879711b66
+VITE_MODULE_CODE=rec
+```
+
+Puis `npm install && npm run dev`. L'URL de l'API est déjà compilée dans
+l'application. Tant que ce fichier manque, un écran dit exactement quoi créer,
+au lieu d'une erreur réseau.
+
+> Les commandes `docker` ci-dessus sont les vôtres, pas les leurs. StackBlitz
+> n'a ni Docker ni noyau Linux, et les groupes n'en ont pas besoin : l'API est
+> déployée, ils ne lancent que l'interface.
 
 ---
 
@@ -85,7 +98,7 @@ sont stables — les références qu'ils stockent restent valables.
 | [`contrat-api.md`](contrat-api.md) | Le contrat d'API compact — celui qu'on colle dans Copilot |
 | [`openapi.json`](openapi.json) | La spécification complète, en un fichier |
 | [`docs/01-architecture.md`](docs/01-architecture.md) | Les décisions et leurs raisons |
-| [`docs/02-deploiement-coolify.md`](docs/02-deploiement-coolify.md) | Déployer sur le VPS, les jetons, le CORS |
+| [`docs/02-deploiement.md`](docs/02-deploiement.md) | Le serveur, les jetons, le DNS, les postes étudiants |
 
 ---
 

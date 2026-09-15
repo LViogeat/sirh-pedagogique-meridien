@@ -10,14 +10,20 @@ npm run dev
 
 ## Configuration
 
-Un fichier `.env` à la racine de `app/`, trois lignes, différentes d'un groupe
-à l'autre :
+Copiez `.env.example` en `.env`, dans ce dossier, et remplissez les deux lignes
+avec ce que l'intervenant vous a remis :
 
 ```
-VITE_API_URL=https://sirh-api.exemple.fr
 VITE_API_TOKEN=le-jeton-de-votre-groupe
 VITE_MODULE_CODE=rec
 ```
+
+Puis **relancez `npm run dev`** : une variable d'environnement n'est lue qu'au
+démarrage.
+
+L'URL de l'API du cours est déjà connue de l'application. Ajoutez
+`VITE_API_URL=http://localhost:8000` uniquement si vous faites tourner l'API
+sur votre propre machine.
 
 ## Structure
 
