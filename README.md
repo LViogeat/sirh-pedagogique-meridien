@@ -74,10 +74,12 @@ sont stables — les références qu'ils stockent restent valables.
 | | |
 |---|---|
 | [`README-ETUDIANTS.md`](README-ETUDIANTS.md) | **Le guide des groupes** : modèle, endpoints, SDK, kit de prompts |
-| [`contrat-api.md`](contrat-api.md) | Le contrat d'API compact — celui qu'on colle dans Copilot |
+| [`app/contrat-api.md`](app/contrat-api.md) | Le contrat d'API compact — celui qu'on colle dans Copilot |
 | [`openapi.json`](openapi.json) | La spécification complète, en un fichier |
 | [`docs/01-architecture.md`](docs/01-architecture.md) | Les décisions et leurs raisons |
 | [`docs/02-deploiement.md`](docs/02-deploiement.md) | Le serveur, les jetons, le DNS, les postes étudiants |
+| [`docs/03-conduite-du-cours.md`](docs/03-conduite-du-cours.md) | **Votre document** : jetons, en-têtes Copilot, les cinq sprints, les pannes |
+| [`scripts/fiches-groupes.sh`](scripts/fiches-groupes.sh) | Imprime les six fiches à distribuer, jetons compris |
 
 ---
 

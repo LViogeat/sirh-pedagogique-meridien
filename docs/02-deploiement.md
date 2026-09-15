@@ -45,7 +45,7 @@ Après une modification de l'API, régénérer les deux livrables de documentati
 
 ```bash
 docker compose exec -T api python -m socle.export_openapi > openapi.json
-docker compose exec -T api python -m socle.export_contrat > contrat-api.md
+docker compose exec -T api python -m socle.export_contrat > app/contrat-api.md
 ```
 
 Pour tout effacer et repartir de zéro : `docker compose down -v`.

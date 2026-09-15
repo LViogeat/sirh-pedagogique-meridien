@@ -1,7 +1,7 @@
 """
 Génère `contrat-api.md` : la version compacte du contrat d'API.
 
-    python -m socle.export_contrat > ../contrat-api.md
+    python -m socle.export_contrat > ../app/contrat-api.md
 
 Pourquoi deux fichiers ? `openapi.json` est la spécification complète, celle
 qui fait foi et qu'on ouvre dans un outil. Elle pèse une centaine de kilo-octets,
@@ -9,7 +9,8 @@ ce qui sature le contexte d'un chat IA gratuit.
 
 Ce fichier-ci dit la même chose en dix fois moins de place : les endpoints,
 leurs filtres, et la forme exacte des réponses. C'est LUI que les étudiants
-collent dans Copilot au début d'une conversation.
+collent dans Copilot au début d'une conversation — il vit donc dans `app/`,
+là où ils travaillent.
 
 Il est engendré depuis la même source que la spécification : les deux ne
 peuvent pas diverger.

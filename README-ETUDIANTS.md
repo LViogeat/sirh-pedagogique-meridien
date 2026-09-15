@@ -928,7 +928,7 @@ complet, on interdit les explications.**
 Je développe un module dans une application Vue 3 + PrimeVue.
 Voici le contrat de l'API que je consomme :
 
-[coller le contenu de contrat-api.md]
+[coller le contenu de app/contrat-api.md — il est dans votre projet]
 
 Voici un écran existant du projet, qui me sert de modèle :
 
