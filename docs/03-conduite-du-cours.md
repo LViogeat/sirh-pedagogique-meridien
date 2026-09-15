@@ -326,7 +326,8 @@ curl -X POST $API/admin/besoins/generer -H "Authorization: Bearer $JETON"
 
 | Symptôme | Cause | Réponse |
 |---|---|---|
-| « Il manque votre fichier de configuration » | pas de `.env` | leur fiche, section 2 |
+| « Il manque votre fichier de configuration » | pas de `app/.env` | leur fiche, section 2 |
+| `Could not read package.json` | ils sont dans le mauvais dossier | `npm install` marche depuis la racine ou `app/` — sinon ils ont une version du dépôt antérieure au 15/09 |
 | Le `.env` est créé mais rien ne change | Vite lit `.env` au démarrage | relancer `npm run dev` |
 | `Jeton inconnu` | jeton mal recopié | comparer à la fiche, attention aux espaces |
 | `L'API ne répond pas` | réseau, ou API arrêtée | `curl $API/` depuis votre poste |

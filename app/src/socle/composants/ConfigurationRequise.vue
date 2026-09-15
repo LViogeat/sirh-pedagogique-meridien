@@ -16,8 +16,8 @@ import { API_URL, API_TOKEN, MODULE_CODE } from '../config'
       <h1>Il manque votre fichier de configuration</h1>
       <p>
         L’application ne sait pas encore quel groupe vous êtes. Créez un fichier
-        nommé <code>.env</code> dans le dossier <code>app/</code>, avec ces deux
-        lignes :
+        nommé <code>.env</code> <strong>à côté de <code>package.json</code></strong>,
+        dans le dossier <code>app/</code>, avec ces deux lignes :
       </p>
 
       <pre>VITE_API_TOKEN=le-jeton-de-votre-groupe

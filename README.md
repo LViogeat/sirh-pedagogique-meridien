@@ -26,17 +26,17 @@ dessus. On ne fait tourner que l'interface, dans le navigateur.
 https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/main/app
 ```
 
-Chaque groupe fait son fork, copie `.env.example` en `.env` et y met deux
-lignes — son jeton et le code de son module :
+Chaque groupe fait son fork, puis copie `app/.env.example` en `app/.env` et y
+met deux lignes — son jeton et le code de son module :
 
 ```
 VITE_API_TOKEN=667c885ab05157e879711b66
 VITE_MODULE_CODE=rec
 ```
 
-Puis `npm install && npm run dev`. L'URL de l'API est déjà compilée dans
-l'application. Tant que ce fichier manque, un écran dit exactement quoi créer,
-au lieu d'une erreur réseau.
+Puis `npm install && npm run dev`, depuis la racine du projet ou depuis `app/`,
+indifféremment. L'URL de l'API est déjà compilée dans l'application. Tant que ce
+fichier manque, un écran dit exactement quoi créer, au lieu d'une erreur réseau.
 
 > Pour faire évoluer le socle, l'intervenant le monte sur son poste avec
 > Docker : voir [`docs/02-deploiement.md`](docs/02-deploiement.md).

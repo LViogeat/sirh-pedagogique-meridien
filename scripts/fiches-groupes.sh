@@ -32,7 +32,8 @@ echo "$GROUPES" | tr ',' '\n' | while IFS=: read -r code libelle jeton besoin; d
   1. Ouvrez le projet, et faites-en votre fork :
      $DEPOT
 
-  2. Créez un fichier « .env » à la racine, avec ces deux lignes :
+  2. Créez un fichier « .env » dans le dossier app/, à côté de
+     package.json, avec ces deux lignes :
 
      VITE_API_TOKEN=$jeton
      VITE_MODULE_CODE=$code

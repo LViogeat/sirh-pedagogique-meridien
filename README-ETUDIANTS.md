@@ -263,17 +263,19 @@ que l'interface.
 Ouvrez le projet dans StackBlitz, puis, dans le terminal :
 
 ```bash
-cd app
 npm install
 npm run dev
 ```
 
+Ces deux commandes fonctionnent depuis la racine du projet comme depuis le
+dossier `app/`.
+
 > Vous ne verrez jamais de commande `docker` dans ce guide : StackBlitz n'a ni
 > Docker ni noyau Linux, et vous n'en avez pas besoin. L'API est déjà en ligne.
 
-**Créez ensuite votre fichier de configuration.** Dans le dossier `app/`,
-copiez `.env.example` en `.env` et remplissez les deux lignes avec ce que
-l'intervenant vous a remis :
+**Créez ensuite votre fichier de configuration.** Il vit dans le dossier
+`app/`, à côté de `package.json` : copiez-y `.env.example` en `.env` et
+remplissez les deux lignes avec ce que l'intervenant vous a remis :
 
 ```
 VITE_API_TOKEN=le-jeton-de-votre-groupe

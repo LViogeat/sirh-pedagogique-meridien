@@ -8,6 +8,8 @@ npm install
 npm run dev
 ```
 
+Depuis la racine du dépôt, les deux mêmes commandes fonctionnent aussi.
+
 ## Configuration
 
 Copiez `.env.example` en `.env`, dans ce dossier, et remplissez les deux lignes

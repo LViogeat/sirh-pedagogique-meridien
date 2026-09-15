@@ -1,0 +1,11 @@
+{
+  "name": "sirh-sorbonne-hotel",
+  "private": true,
+  "description": "Socle SIRH Sorbonne-Hôtel — Master 2 SIRH, Université Paris 1 Panthéon-Sorbonne",
+  "workspaces": ["app"],
+  "scripts": {
+    "dev": "npm run dev --workspace app",
+    "build": "npm run build --workspace app",
+    "preview": "npm run preview --workspace app"
+  }
+}
