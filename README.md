@@ -17,7 +17,9 @@ groupes. Chaque groupe développe un module RH qui se branche sur ce socle.
 
 ---
 
-## Monter le tout en local
+## Deux environnements, à ne pas confondre
+
+**Votre poste**, pour faire évoluer le socle et tester avant de déployer :
 
 ```bash
 docker compose up -d --build     # base + API, données chargées au premier démarrage
@@ -29,6 +31,20 @@ cd app && npm install && npm run dev
 
 Le premier démarrage crée les tables, prépare les six schémas de groupe et
 charge le jeu de démonstration. Il n'y a aucune commande à lancer ensuite.
+
+Ajoutez `app/.env` avec `VITE_API_URL=http://localhost:8000` pour que le front
+local tape votre API locale plutôt que celle du serveur.
+
+**Le poste d'un groupe**, dans StackBlitz : pas de Docker, pas de base de
+données. Ils ne lancent que le front, qui appelle l'API déployée.
+
+```bash
+cd app && npm install && npm run dev
+```
+
+Chaque groupe crée son `app/.env` à partir de `app/.env.example` : son jeton et
+le code de son module, rien d'autre. L'URL de l'API est déjà connue de
+l'application. Tant que ce fichier manque, un écran le leur dit.
 
 ---
 

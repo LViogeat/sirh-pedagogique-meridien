@@ -20,6 +20,7 @@ const postesAPourvoir = ref([])
 const besoins = ref([])
 const entretiens = ref([])
 const chargement = ref(true)
+const erreur = ref(null)
 
 onMounted(async () => {
   try {
@@ -30,6 +31,8 @@ onMounted(async () => {
         getBesoins({ statut: 'ouvert' }),
         getEntretiens(),
       ])
+  } catch (e) {
+    erreur.value = e.message
   } finally {
     chargement.value = false
   }
@@ -61,6 +64,10 @@ function ouvrir(module) {
   />
 
   <div v-if="chargement" class="attente"><ProgressSpinner /></div>
+
+  <Message v-else-if="erreur" severity="error" :closable="false">
+    {{ erreur }}
+  </Message>
 
   <template v-else>
     <!-- ── L'entreprise en cinq chiffres ──────────────────────────────── -->

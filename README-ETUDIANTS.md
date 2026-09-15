@@ -256,13 +256,34 @@ erDiagram
 
 ## 5. Démarrer en cinq minutes
 
-Votre instance de code-server contient déjà le projet. Dans le terminal :
+**Vous ne lancez jamais de base de données ni de serveur.** L'API du cours
+tourne déjà, en ligne, et tous les groupes tapent dessus. Vous ne faites tourner
+que l'interface.
+
+Ouvrez le projet dans StackBlitz, puis, dans le terminal :
 
 ```bash
 cd app
 npm install
 npm run dev
 ```
+
+> Les commandes `docker` du README principal sont celles de l'intervenant, pour
+> monter l'API sur son poste. Elles ne fonctionnent pas dans StackBlitz, et vous
+> n'en avez pas besoin.
+
+**Créez ensuite votre fichier de configuration.** Dans le dossier `app/`,
+copiez `.env.example` en `.env` et remplissez les deux lignes avec ce que
+l'intervenant vous a remis :
+
+```
+VITE_API_TOKEN=le-jeton-de-votre-groupe
+VITE_MODULE_CODE=rec
+```
+
+Puis **relancez `npm run dev`** : une variable d'environnement n'est lue qu'au
+démarrage. Tant que ce fichier manque, l'application affiche un écran qui vous
+le rappelle.
 
 L'application s'ouvre sur l'**accueil du logiciel** : l'entreprise en cinq
 chiffres, la chaîne qui va de l'entretien annuel au module qui agit, et les six
@@ -1104,8 +1125,10 @@ six dossiers.
 
 | Message | Ce qu'il veut dire |
 |---|---|
-| `Jeton inconnu` | `VITE_API_TOKEN` dans `app/.env` ne correspond à aucun groupe |
-| `L'API ne répond pas` | `VITE_API_URL` est faux, ou l'API est arrêtée |
+| « Il manque votre fichier de configuration » | `app/.env` n'existe pas encore — voir la section 5 |
+| `Jeton inconnu` | `VITE_API_TOKEN` ne correspond à aucun groupe |
+| `L'API ne répond pas` | L'API est arrêtée, ou votre réseau la bloque — prévenez l'intervenant |
+| Une modification de `.env` sans effet | Relancez `npm run dev` : le fichier n'est lu qu'au démarrage |
 | `permission denied for table …` | Vous écrivez hors de votre schéma |
 | `relation "…" does not exist` | La table n'existe pas — l'avez-vous créée dans la console ? |
 | `Ce besoin est de type « … ». Le module « … » ne prend en charge que…` | Ce type de besoin appartient à un autre groupe |

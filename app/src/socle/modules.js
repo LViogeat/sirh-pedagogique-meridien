@@ -59,7 +59,7 @@ for (const [chemin, m] of Object.entries(trouves)) {
   if (valide) manifestes[valide.code] = valide
 }
 
-if (!GROUPES.some((g) => g.code === MODULE_CODE)) {
+if (MODULE_CODE && !GROUPES.some((g) => g.code === MODULE_CODE)) {
   console.error(
     `[SIRH] VITE_MODULE_CODE vaut « ${MODULE_CODE} », qui n'est le code d'aucun ` +
     `groupe. Corrigez le fichier app/.env. Codes attendus : ` +
