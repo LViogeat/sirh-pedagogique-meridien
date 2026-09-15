@@ -12,7 +12,47 @@ tourner aucune base : ils lancent une interface Vite qui appelle cette API.
 
 ---
 
-## 1. Pourquoi pas de panneau d'orchestration
+## 1. Le socle sur votre poste
+
+Avant de déployer quoi que ce soit, le socle tourne en entier sur une machine
+de développement — c'est là qu'on fait évoluer le modèle, les seuils ou les
+écrans, et qu'on vérifie avant de pousser.
+
+```bash
+docker compose up -d --build     # base + API, données chargées au premier démarrage
+cd app && npm install && npm run dev
+```
+
+- API et documentation interactive : <http://localhost:8000/docs>
+- Application : <http://localhost:5173>
+
+Le premier démarrage crée les tables, prépare les six schémas de groupe et
+charge le jeu de démonstration. Il n'y a aucune commande à lancer ensuite.
+
+Ajoutez un fichier `app/.env` pour que le front local vise votre API locale
+plutôt que celle du serveur :
+
+```
+VITE_API_URL=http://localhost:8000
+VITE_API_TOKEN=jeton-rec
+VITE_MODULE_CODE=rec
+```
+
+Les jetons `jeton-rec`, `jeton-form`, … et `jeton-admin` sont les valeurs par
+défaut hors production ; elles ne valent que sur votre poste.
+
+Après une modification de l'API, régénérer les deux livrables de documentation :
+
+```bash
+docker compose exec -T api python -m socle.export_openapi > openapi.json
+docker compose exec -T api python -m socle.export_contrat > contrat-api.md
+```
+
+Pour tout effacer et repartir de zéro : `docker compose down -v`.
+
+---
+
+## 2. Pourquoi pas de panneau d'orchestration
 
 Le VPS a **1 vCPU et 3,8 Go de RAM**, et héberge déjà une autre application qui
 occupe les ports 80 et 443 avec son propre Caddy.
@@ -25,7 +65,7 @@ panne sans contrepartie.
 Le socle est donc déployé en `docker compose` simple, dans `/opt/sirh`, et
 exposé par le reverse proxy déjà en place.
 
-## 2. Pourquoi les groupes ne codent pas sur le serveur
+## 3. Pourquoi les groupes ne codent pas sur le serveur
 
 Six instances de code-server, c'était le plan initial. L'arithmétique l'a
 écarté :
@@ -48,7 +88,7 @@ qui code. C'est aussi ce que prévoyait l'architecture d'origine.
 
 ---
 
-## 3. Le déploiement, de bout en bout
+## 4. Le déploiement, de bout en bout
 
 ### Préparer le serveur
 
@@ -119,7 +159,7 @@ curl -s http://127.0.0.1:8001/
 
 ---
 
-## 4. Le nom de domaine et le certificat
+## 5. Le nom de domaine et le certificat
 
 Un enregistrement `A` chez le gestionnaire DNS du domaine :
 
@@ -148,7 +188,7 @@ Caddy — quelques secondes d'interruption pour l'application voisine.
 
 ---
 
-## 5. Le poste d'un groupe
+## 6. Le poste d'un groupe
 
 Rien à installer. Le dépôt s'ouvre dans StackBlitz, directement sur le dossier
 de l'application :
@@ -175,7 +215,7 @@ réseau.
 
 ---
 
-## 6. Tenir le cours
+## 7. Tenir le cours
 
 ```bash
 JETON=... ; API=https://sirh-api.govetia.com
@@ -209,7 +249,7 @@ cd /opt/sirh && git pull && docker compose -f docker-compose.prod.yml up -d --bu
 
 ---
 
-## 7. Sauvegarde
+## 8. Sauvegarde
 
 Le socle se régénère à l'identique : il n'a pas besoin d'être sauvegardé. Le
 travail des six groupes, si.

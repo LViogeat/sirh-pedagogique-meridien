@@ -17,34 +17,17 @@ groupes. Chaque groupe développe un module RH qui se branche sur ce socle.
 
 ---
 
-## Deux environnements, à ne pas confondre
+## Démarrer
 
-**Votre poste**, pour faire évoluer le socle et tester avant de déployer :
-
-```bash
-docker compose up -d --build     # base + API, données chargées au premier démarrage
-cd app && npm install && npm run dev
-```
-
-- API et documentation interactive : <http://localhost:8000/docs>
-- Application : <http://localhost:5173>
-
-Le premier démarrage crée les tables, prépare les six schémas de groupe et
-charge le jeu de démonstration. Il n'y a aucune commande à lancer ensuite.
-
-Ajoutez `app/.env` avec `VITE_API_URL=http://localhost:8000` pour que le front
-local tape votre API locale plutôt que celle du serveur.
-
-**Le poste d'un groupe** : pas de Docker, pas de base de données, rien à
-installer. StackBlitz exécute Vite dans le navigateur et le dépôt s'y ouvre
-directement sur le dossier de l'application :
+Rien à installer : **l'API du socle est déployée**, et les six groupes tapent
+dessus. On ne fait tourner que l'interface, dans le navigateur.
 
 ```
 https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/main/app
 ```
 
-Chaque groupe fait son fork, puis crée un fichier `.env` à partir de
-`.env.example`, avec deux lignes — son jeton et le code de son module :
+Chaque groupe fait son fork, copie `.env.example` en `.env` et y met deux
+lignes — son jeton et le code de son module :
 
 ```
 VITE_API_TOKEN=667c885ab05157e879711b66
@@ -55,33 +38,29 @@ Puis `npm install && npm run dev`. L'URL de l'API est déjà compilée dans
 l'application. Tant que ce fichier manque, un écran dit exactement quoi créer,
 au lieu d'une erreur réseau.
 
-> Les commandes `docker` ci-dessus sont les vôtres, pas les leurs. StackBlitz
-> n'a ni Docker ni noyau Linux, et les groupes n'en ont pas besoin : l'API est
-> déployée, ils ne lancent que l'interface.
+> Pour faire évoluer le socle, l'intervenant le monte sur son poste avec
+> Docker : voir [`docs/02-deploiement.md`](docs/02-deploiement.md).
 
 ---
 
 ## Les commandes du cours
 
-```bash
-# Remettre les données du socle à zéro, entre deux sprints
-docker compose exec api python -m socle.reset
+Depuis n'importe où, avec le jeton intervenant :
 
-# Ou, sans accès au serveur, avec le jeton intervenant
-curl -X POST https://sirh-api.exemple.fr/admin/reset \
-     -H "Authorization: Bearer $JETON_ADMIN"
+```bash
+API=https://sirh-api.govetia.com
+
+# Remettre les données du socle à zéro, entre deux sprints
+curl -X POST $API/admin/reset -H "Authorization: Bearer $JETON_ADMIN"
 
 # Rejouer les règles après avoir ajusté un seuil
-curl -X POST https://sirh-api.exemple.fr/admin/besoins/generer \
-     -H "Authorization: Bearer $JETON_ADMIN"
+curl -X POST $API/admin/besoins/generer -H "Authorization: Bearer $JETON_ADMIN"
 
 # Repartir propre sur le schéma d'un groupe qui s'est mis en difficulté
-curl -X POST https://sirh-api.exemple.fr/admin/modules/rec/reset \
-     -H "Authorization: Bearer $JETON_ADMIN"
+curl -X POST $API/admin/modules/rec/reset -H "Authorization: Bearer $JETON_ADMIN"
 
-# Régénérer les livrables de documentation après une modification de l'API
-docker compose exec -T api python -m socle.export_openapi > openapi.json
-docker compose exec -T api python -m socle.export_contrat > contrat-api.md
+# Compter les lignes de chaque table — le contrôle de cohérence
+curl $API/admin/etat -H "Authorization: Bearer $JETON_ADMIN"
 ```
 
 **La remise à zéro du socle ne touche pas les schémas des groupes.** Le travail

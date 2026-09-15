@@ -268,9 +268,8 @@ npm install
 npm run dev
 ```
 
-> Les commandes `docker` du README principal sont celles de l'intervenant, pour
-> monter l'API sur son poste. Elles ne fonctionnent pas dans StackBlitz, et vous
-> n'en avez pas besoin.
+> Vous ne verrez jamais de commande `docker` dans ce guide : StackBlitz n'a ni
+> Docker ni noyau Linux, et vous n'en avez pas besoin. L'API est déjà en ligne.
 
 **Créez ensuite votre fichier de configuration.** Dans le dossier `app/`,
 copiez `.env.example` en `.env` et remplissez les deux lignes avec ce que
