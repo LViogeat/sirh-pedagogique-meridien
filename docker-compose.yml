@@ -4,8 +4,7 @@
 #   docker compose up -d --build
 #   open http://localhost:8000/docs
 #
-# En production, Coolify déploie ces deux services séparément — voir
-# docs/02-deploiement-coolify.md.
+# En production : docker-compose.prod.yml — voir docs/02-deploiement.md.
 
 services:
   db:

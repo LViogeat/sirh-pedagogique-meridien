@@ -174,17 +174,40 @@ que le nom ne résout pas :
 dig +short A sirh-api.govetia.com
 ```
 
-Puis ajouter le site au Caddy existant, par sa variable `CADDY_EXTRA_CONFIG` :
+Puis ajouter le site au Caddy existant — le conteneur `php` (FrankenPHP) de
+sweet-waters, dont le Caddyfile lit `{$CADDY_EXTRA_CONFIG}`.
 
-```
-CADDY_EXTRA_CONFIG=sirh-api.govetia.com {
-    reverse_proxy sirh-api:8000
-}
+> ⚠️ Ajouter la variable au `.env.prod` de sweet-waters **ne suffit pas** :
+> son `compose.prod.yaml` ne la transmet pas au conteneur.
+
+Elle passe donc par un fichier compose d'appoint, hors dépôt,
+`/opt/sweet-waters/compose.sirh.yaml` :
+
+```yaml
+services:
+  php:
+    environment:
+      CADDY_EXTRA_CONFIG: |
+        sirh-api.govetia.com {
+            reverse_proxy sirh-api:8000
+        }
 ```
 
-Le certificat est demandé automatiquement au premier appel. Sauvegarder le
-fichier d'environnement avant de le modifier, et recréer le conteneur qui porte
-Caddy — quelques secondes d'interruption pour l'application voisine.
+Recréer le seul conteneur `php`, sans reconstruire l'image ni toucher à la base
+de l'application voisine — une trentaine de secondes d'interruption pour elle :
+
+```bash
+cd /opt/sweet-waters
+docker compose --env-file .env.prod -f compose.prod.yaml -f compose.sirh.yaml \
+  up -d --no-build --no-deps php
+docker exec sweet-waters-backend-php-1 printenv CADDY_EXTRA_CONFIG   # doit afficher le bloc
+```
+
+Le certificat est demandé automatiquement au premier appel.
+
+> ⚠️ Le `docker/deploy/deploy.sh` de sweet-waters lance compose **sans** ce
+> fichier : chaque déploiement de sweet-waters retire le site SIRH. Sa variable
+> `COMPOSE` doit inclure `-f compose.sirh.yaml`.
 
 ---
 
