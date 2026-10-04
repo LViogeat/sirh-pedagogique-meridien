@@ -5,7 +5,7 @@
 ## Le problème à résoudre
 
 Faire produire six modules d'un SIRH par dix-neuf étudiants **non-développeurs**,
-en trois jours, par sprints d'environ deux heures de production réelle, avec
+en trois jours, par sprints d'environ une heure, avec
 pour seul outil une IA en conversation et du copier-coller. Ils n'installent
 rien : le dépôt s'ouvre dans StackBlitz, et l'API du socle est déployée.
 

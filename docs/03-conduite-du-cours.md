@@ -216,14 +216,18 @@ Corrige-le. Rends uniquement le fichier complet corrigé.
 
 ## 5. Le rythme d'un sprint
 
-Deux heures de production réelle, cadrées :
+Environ une heure. À chaque sprint, le rôle de PO tourne : **le PO du sprint
+est celui qui vous fait la démo**, et c'est lui qui a cadré ce qu'on livre.
 
 | | |
 |---|---|
-| **15 min** — cadrage | ce qu'on livre à la fin, écrit au tableau |
-| **80 min** — production | conception, prompts, collage, essais |
-| **15 min** — recette | on vérifie sur le jeu de données, on note ce qui cloche |
-| **10 min** — démonstration | trois minutes par groupe, écran partagé |
+| **~10 min** — cadrage | le PO écrit ce qu'on livre à la fin |
+| **~30 min** — production | conception, prompts, collage, essais |
+| **~5 min** — recette | on vérifie sur le jeu de données, on note ce qui cloche |
+| **~20 min** — passage groupe par groupe | vous passez devant chaque groupe, un par un : démo par le PO, puis rétro, trois minutes environ |
+
+C'est ce passage qui fixe la durée réelle d'un sprint. Avec six groupes, il
+prend vingt minutes ; mieux vaut raccourcir la production que sauter un groupe.
 
 La recette est la partie qu'on sacrifie quand on est en retard, et c'est
 justement celle qui a le plus de valeur : le jeu de données étant déterministe,
@@ -232,12 +236,31 @@ Lyon » **avant** de coder, puis vérifier.
 
 ---
 
-## 6. Les cinq sprints
+## 6. Le déroulé des trois jours
 
-À adapter, mais l'ordre compte : lire avant d'écrire, écrire chez soi avant de
-toucher au socle, et l'intégration en dernier.
+### Jour 1 — le sprint 0, après la théorie
 
-### Sprint 1 — comprendre et modéliser
+La matinée et le début d'après-midi sont consacrés à la théorie, puis à la
+présentation du projet. Le sprint 0 vient ensuite : il ne produit rien, il
+installe les postes.
+
+Chaque groupe forke le projet dans StackBlitz, crée son `app/.env` à partir de
+sa fiche, lance `npm install` puis `npm run dev`, et fait le tour de
+l'application.
+
+**Livrable** : sur chaque poste, l'écran **Besoins identifiés** affiche des
+lignes, et le module du groupe porte l'étiquette « votre groupe ».
+
+**Vous** : le passage groupe par groupe sert ici à vérifier chaque poste. En
+clôture, chaque groupe désigne son PO du premier sprint.
+
+### Jours 2 et 3 — environ cinq sprints par jour
+
+Les étapes ci-dessous ne sont pas des sprints : chacune en occupe un ou
+plusieurs, selon l'avancée du groupe. L'ordre compte : lire avant d'écrire,
+écrire chez soi avant de toucher au socle, et l'intégration en dernier.
+
+### Étape 1 — comprendre et modéliser
 
 *Ils ne codent pas d'écran.* Ils parcourent le socle : salariés, postes,
 entretiens, besoins. Ils en déduisent ce que leur module doit savoir faire,
@@ -249,21 +272,21 @@ présent — le module apparaît dans le menu.
 **Vous** : rien. Vous circulez et vous posez une seule question à chaque
 groupe : *« à quelle question métier cette table répond-elle ? »*
 
-### Sprint 2 — le premier écran, en lecture
+### Étape 2 — le premier écran, en lecture
 
 Un écran qui lit le socle et affiche une liste filtrable. C'est la duplication
-de `BesoinsList.vue`, et c'est le sprint où ils apprennent l'en-tête A.
+de `BesoinsList.vue`, et c'est l'étape où ils apprennent l'en-tête A.
 
 **Livrable** : un écran dans leur menu, qui affiche de vraies données.
 
-### Sprint 3 — écrire chez soi
+### Étape 3 — écrire chez soi
 
 Créer, modifier, supprimer dans leurs propres tables. Un formulaire, une boîte
 de dialogue, une liste qui se rafraîchit.
 
 **Livrable** : une donnée saisie en salle, qui survit à un rechargement.
 
-### Sprint 4 — consommer les besoins
+### Étape 4 — consommer les besoins
 
 Pour Recrutement, Formation et Mobilité : lire les besoins de leur type, en
 prendre un en charge, le traiter, le clôturer. Pour GTA, Portail RH et
@@ -276,17 +299,21 @@ du socle par toute la classe.
 **Vous** : c'est le moment de relancer `/admin/besoins/generer` si un groupe
 manque de matière.
 
-### Sprint 5 — intégration et démonstration
+### Étape 5 — intégration
 
 Chaque groupe lit les tables d'un autre. Le module Formation affiche les
-candidats recrutés, Mobilité montre les formations suivies. Puis préparation de
-la démonstration finale.
+candidats recrutés, Mobilité montre les formations suivies.
 
 **Livrable** : un écran qui joint le schéma d'un autre groupe au sien.
 
-**La démonstration finale** suit la chaîne, pas les groupes : un entretien
-annuel → le besoin qu'il a produit → le module qui l'a traité → la trace dans
-le socle. Six modules, un seul récit.
+### Les deux grandes démos
+
+Une en fin de jour 2, une en fin de jour 3, devant la classe : chaque PO
+présente son module, cinq à six minutes par groupe.
+
+**La démonstration finale**, au jour 3, suit la chaîne, pas les groupes : un
+entretien annuel → le besoin qu'il a produit → le module qui l'a traité → la
+trace dans le socle. Six modules, un seul récit.
 
 ---
 

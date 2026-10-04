@@ -3,8 +3,9 @@
 Support de cours de méthodologies agiles, Master 2 SIRH,
 Université Paris 1 Panthéon-Sorbonne.
 
-Trois jours, cinq sprints, dix-neuf étudiants non-développeurs répartis en six
-groupes. Chaque groupe développe un module RH qui se branche sur ce socle.
+Trois jours, un sprint 0 puis des sprints d'une heure, dix-neuf étudiants
+non-développeurs répartis en six groupes. Chaque groupe développe un module RH
+qui se branche sur ce socle.
 
 | | |
 |---|---|
@@ -78,7 +79,7 @@ sont stables — les références qu'ils stockent restent valables.
 | [`openapi.json`](openapi.json) | La spécification complète, en un fichier |
 | [`docs/01-architecture.md`](docs/01-architecture.md) | Les décisions et leurs raisons |
 | [`docs/02-deploiement.md`](docs/02-deploiement.md) | Le serveur, les jetons, le DNS, les postes étudiants |
-| [`docs/03-conduite-du-cours.md`](docs/03-conduite-du-cours.md) | **Votre document** : jetons, en-têtes Copilot, les cinq sprints, les pannes |
+| [`docs/03-conduite-du-cours.md`](docs/03-conduite-du-cours.md) | **Votre document** : jetons, en-têtes Copilot, le déroulé des sprints, les pannes |
 | [`scripts/fiches-groupes.sh`](scripts/fiches-groupes.sh) | Imprime les six fiches à distribuer, jetons compris |
 
 ---
