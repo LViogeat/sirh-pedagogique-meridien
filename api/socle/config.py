@@ -57,7 +57,7 @@ _GROUPES_DEFAUT = ",".join(
         "rec:Recrutement:jeton-rec:recrutement",
         "form:Formation:jeton-form:formation",
         "mob:Mobilité & carrière:jeton-mob:mobilite",
-        "gta:Gestion des temps:jeton-gta",
+        "gta:Gestion des temps et activités:jeton-gta",
         "portail:Portail RH & Self-Service:jeton-portail",
         "onb:Onboarding & Offboarding:jeton-onb",
     ]

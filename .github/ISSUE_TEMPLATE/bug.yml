@@ -1,0 +1,52 @@
+name: "Bug"
+description: Un écran qui ne fait pas ce que sa story promettait.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: groupe
+    attributes:
+      label: Votre groupe
+      options:
+        - Recrutement
+        - Gestion des temps et activités
+    validations:
+      required: true
+
+  - type: input
+    id: story
+    attributes:
+      label: La story concernée
+      description: "Son numéro, précédé de # : GitHub fera le lien."
+      placeholder: "#12"
+
+  - type: textarea
+    id: etapes
+    attributes:
+      label: Ce que j'ai fait
+      placeholder: |
+        1. J'ouvre l'écran Offres
+        2. Je filtre sur Lyon
+    validations:
+      required: true
+
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Ce que j'attendais
+    validations:
+      required: true
+
+  - type: textarea
+    id: obtenu
+    attributes:
+      label: Ce que j'ai obtenu
+    validations:
+      required: true
+
+  - type: textarea
+    id: erreur
+    attributes:
+      label: Le message d'erreur, tel quel
+      description: "Copié-collé depuis l'écran ou la console du navigateur (F12). Ne le reformulez pas : c'est lui que vous donnerez à Copilot."
+      render: text

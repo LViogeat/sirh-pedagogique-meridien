@@ -38,7 +38,7 @@ export const GROUPES = [
   },
   {
     code: 'gta',
-    label: 'Module Gestion des temps',
+    label: 'Module Gestion des temps et activités',
     icon: 'pi pi-clock',
     typeBesoin: null,
     perimetre: 'Temps de travail, pointages, congés, absences, compteurs, planning',

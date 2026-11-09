@@ -1,0 +1,52 @@
+name: "Rétro de sprint"
+description: Trois minutes à la fin de chaque sprint, rédigées par le PO avec son groupe.
+title: "[Rétro] Sprint "
+labels: ["retro"]
+body:
+  - type: dropdown
+    id: groupe
+    attributes:
+      label: Votre groupe
+      options:
+        - Recrutement
+        - Gestion des temps et activités
+    validations:
+      required: true
+
+  - type: input
+    id: po
+    attributes:
+      label: Le PO de ce sprint
+      description: "Son identifiant GitHub, précédé de @."
+    validations:
+      required: true
+
+  - type: textarea
+    id: livre
+    attributes:
+      label: Ce qu'on avait promis, ce qu'on a livré
+      description: Les numéros des stories (#12), et pour chacune « livrée » ou « pas livrée ».
+    validations:
+      required: true
+
+  - type: textarea
+    id: bien
+    attributes:
+      label: Ce qui a marché
+    validations:
+      required: true
+
+  - type: textarea
+    id: mal
+    attributes:
+      label: Ce qui a coincé
+    validations:
+      required: true
+
+  - type: input
+    id: action
+    attributes:
+      label: La seule chose qu'on change au prochain sprint
+      description: Une seule. Concrète. Vérifiable à la prochaine rétro.
+    validations:
+      required: true

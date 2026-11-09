@@ -12,7 +12,17 @@
 set -euo pipefail
 
 ENV_FILE="${1:-/opt/sirh/.env}"
-DEPOT="https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/main/app"
+DEPOT="LViogeat/sirh-pedagogique-meridien"
+
+# Le code du module → la branche du groupe. Un groupe sans branche n'a pas de
+# fiche : créez sa branche dans scripts/github-setup.sh, puis ajoutez-le ici.
+branche_de() {
+  case "$1" in
+    rec) echo recruitment ;;
+    gta) echo time-and-attendance ;;
+    *)   echo "" ;;
+  esac
+}
 
 [ -r "$ENV_FILE" ] || { echo "Fichier introuvable : $ENV_FILE" >&2; exit 1; }
 
@@ -23,22 +33,30 @@ API=${API:-https://sirh-api.govetia.com}
 # « code:Libellé:jeton[:type_besoin] », séparés par des virgules.
 echo "$GROUPES" | tr ',' '\n' | while IFS=: read -r code libelle jeton besoin; do
   [ -n "$code" ] || continue
+  branche=$(branche_de "$code")
+  [ -n "$branche" ] || continue
   cat <<FICHE
 
 ────────────────────────────────────────────────────────────────────────
   MODULE $(echo "$libelle" | tr '[:lower:]' '[:upper:]')
 ────────────────────────────────────────────────────────────────────────
 
-  1. Ouvrez le projet, et faites-en votre fork :
-     $DEPOT
+  1. Chacun crée son compte GitHub, donne son identifiant à l'intervenant,
+     puis accepte l'invitation reçue par mail.
 
-  2. Créez un fichier « .env » dans le dossier app/, à côté de
+  2. Ouvrez StackBlitz, connectez-vous avec GitHub, puis ouvrez VOTRE branche :
+     https://stackblitz.com/github/$DEPOT/tree/$branche/app
+
+  3. Créez un fichier « .env » dans le dossier app/, à côté de
      package.json, avec ces deux lignes :
 
      VITE_API_TOKEN=$jeton
      VITE_MODULE_CODE=$code
 
-  3. Dans le terminal :  npm install  puis  npm run dev
+  4. Dans le terminal :  npm install  puis  npm run dev
+
+  Votre branche : $branche
+  Vos tickets : https://github.com/$DEPOT/issues?q=label%3A$branche
 
   Votre schéma de base de données : $code
   Besoins que vous prenez en charge : ${besoin:-aucun}

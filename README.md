@@ -20,18 +20,30 @@ qui se branche sur ce socle.
 
 ## Démarrer
 
-Rien à installer : **l'API du socle est déployée**, et les six groupes tapent
+Rien à installer : **l'API du socle est déployée**, et les groupes tapent
 dessus. On ne fait tourner que l'interface, dans le navigateur.
 
+**Chaque groupe a sa branche**, et l'ouvre dans StackBlitz, connecté avec son
+compte GitHub :
+
+| Groupe | Branche | Code |
+|---|---|---|
+| Recrutement | `recruitment` | `rec` |
+| Gestion des temps et activités | `time-and-attendance` | `gta` |
+
 ```
-https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/main/app
+https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/recruitment/app
 ```
 
-Chaque groupe fait son fork, puis copie `app/.env.example` en `app/.env` et y
-met deux lignes — son jeton et le code de son module :
+`main` n'est modifiable que par l'intervenant : c'est lui qui y fusionne les
+branches avant une démo. Le travail des groupes se suit dans les tickets
+(user stories, bugs, rétros) et dans l'historique de leur branche.
+
+Le groupe copie ensuite `app/.env.example` en `app/.env` et y met deux
+lignes, son jeton et le code de son module :
 
 ```
-VITE_API_TOKEN=667c885ab05157e879711b66
+VITE_API_TOKEN=<le jeton de votre fiche>
 VITE_MODULE_CODE=rec
 ```
 
@@ -80,7 +92,10 @@ sont stables — les références qu'ils stockent restent valables.
 | [`docs/01-architecture.md`](docs/01-architecture.md) | Les décisions et leurs raisons |
 | [`docs/02-deploiement.md`](docs/02-deploiement.md) | Le serveur, les jetons, le DNS, les postes étudiants |
 | [`docs/03-conduite-du-cours.md`](docs/03-conduite-du-cours.md) | **Votre document** : jetons, en-têtes Copilot, le déroulé des sprints, les pannes |
-| [`scripts/fiches-groupes.sh`](scripts/fiches-groupes.sh) | Imprime les six fiches à distribuer, jetons compris |
+| [`app/copilot/`](app/copilot) | Le kit Copilot de chaque groupe, assemblé par `scripts/kit-copilot.sh` |
+| [`scripts/fiches-groupes.sh`](scripts/fiches-groupes.sh) | Imprime les fiches à distribuer, jetons compris |
+| [`scripts/github-setup.sh`](scripts/github-setup.sh) | Branches, protections, invitations, tableau de sprint |
+| [`scripts/preparer-session.sh`](scripts/preparer-session.sh) | La veille : date de référence, jetons, remise à zéro |
 
 ---
 
@@ -153,7 +168,7 @@ plus.
 | `rec` | Recrutement | postes, établissements, contrats | `recrutement` |
 | `form` | Formation | compétences, salariés, entretiens | `formation` |
 | `mob` | Mobilité & carrière | aspirations, postes, contrats | `mobilite` |
-| `gta` | Gestion des temps | salariés, contrats, établissements, départements | *aucun* |
+| `gta` | Gestion des temps et activités | salariés, contrats, établissements, départements | *aucun* |
 | `portail` | Portail RH & Self-Service | salariés, contrats, hiérarchie managériale | *aucun* |
 | `onb` | Onboarding & Offboarding | salariés, contrats, postes, départements | *aucun* |
 

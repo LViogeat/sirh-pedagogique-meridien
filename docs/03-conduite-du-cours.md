@@ -73,40 +73,86 @@ excellent point de cours, justement.
 
 ---
 
-## 3. Avant le premier jour
+## 3. Avant chaque séance
+
+Les séances : **5 octobre** (théorie, fait), **lundi 16 novembre**,
+**lundi 14 décembre 2026**. Deux groupes sûrs pour démarrer : Recrutement et
+Gestion des temps et activités. Les autres s'ajoutent avec eux (voir
+« Ajouter un groupe », section 10).
 
 ### J-7 — le test qui conditionne tout
 
-**Depuis un poste de l'université**, pas depuis chez vous :
+**Depuis un poste de l'université**, pas depuis chez vous, et **avec un compte
+étudiant** pour Copilot :
 
 | À vérifier | Comment |
 |---|---|
-| StackBlitz n'est pas filtré | ouvrir le lien du projet, lancer `npm install` |
+| StackBlitz n'est pas filtré | ouvrir le lien de la branche `recruitment`, lancer `npm install` |
 | L'API n'est pas filtrée | ouvrir `https://sirh-api.govetia.com/docs` |
-| Un compte StackBlitz se crée | avec une adresse universitaire |
-| Copilot est accessible | avec leur compte Microsoft 365 |
+| StackBlitz commite sur la branche | connecté avec un compte GitHub invité : modifier un fichier, *Commit*, vérifier le commit sur GitHub |
+| **Le `.env` ne part pas dans le commit** | dans le commit de test, seul le fichier modifié doit apparaître — sinon le jeton est public |
+| Deux commits ne s'écrasent pas | deux StackBlitz ouverts sur la même branche, chacun modifie un fichier différent et commite : les deux modifications doivent rester |
+| Copilot accepte le kit en pièce jointe | joindre `app/copilot/recruitment.md` (27 000 caractères), demander « prêt » |
+| Copilot code une story | coller une story d'exemple : le fichier rendu doit s'afficher sans erreur |
+| Copilot permet de créer un agent | Copilot Chat → *Agents* → *Créer un agent*. Si oui : un agent « Dev SIRH » avec les instructions du kit, et le kit en connaissance |
 
-Si l'un des quatre échoue, c'est l'environnement qu'il faut revoir, pas
-l'architecture. Prévoyez le repli : GitHub Codespaces à la place de StackBlitz,
-Claude.ai ou Le Chat à la place de Copilot.
+Si l'un des quatre premiers échoue, c'est l'environnement qu'il faut revoir,
+pas l'architecture. Prévoyez le repli : GitHub Codespaces à la place de
+StackBlitz, Claude.ai ou Le Chat à la place de Copilot.
 
-### J-1 — caler la date de référence
+### J-7 — GitHub
 
-**C'est l'oubli qui coûte le plus cher.** Tout le jeu de données est calculé à
-partir de `DATE_REFERENCE` : ancienneté, contrats arrivant à échéance, campagne
-d'entretiens en cours. Réglez-la sur le **premier jour du cours**, puis n'y
-touchez plus de la semaine.
+Une fois les identifiants GitHub des étudiants reçus, dans un
+`comptes-github.csv` à la racine (ignoré par git) :
 
-```bash
-ssh <serveur>
-cd /opt/sirh
-sed -i 's/^DATE_REFERENCE=.*/DATE_REFERENCE=2026-10-05/' .env
-docker compose -f docker-compose.prod.yml up -d
-curl -X POST https://sirh-api.govetia.com/admin/reset \
-     -H "Authorization: Bearer $JETON_ADMIN"
+```
+identifiant-github,branche
+lea-meyer,recruitment
+tom-dupont,time-and-attendance
 ```
 
-Vérifier ensuite que la matière est suffisante :
+```bash
+gh auth refresh -s project               # une fois : le droit de créer le tableau
+bash scripts/github-setup.sh comptes-github.csv
+```
+
+Le script crée les étiquettes, les branches des groupes depuis `main`, les
+protections (`main` n'est modifiable que par vous ; les branches des groupes
+ne peuvent être ni supprimées ni réécrites), envoie les invitations et crée le
+tableau de sprint. Il affiche à la fin les trois réglages à faire à la main
+dans le tableau. Il se relance sans risque : chaque nouvel étudiant, on
+l'ajoute au CSV et on relance.
+
+**Les étudiants doivent accepter l'invitation** avant de pouvoir commiter.
+Faites-le faire en début de séance, c'est la première panne du jour sinon.
+
+### J-1 — caler la date de référence, changer les jetons
+
+Tout le jeu de données est calculé à partir de `DATE_REFERENCE` : ancienneté,
+contrats arrivant à échéance « sous trois mois », campagne d'entretiens en
+cours. Le socle ne lit jamais l'horloge.
+
+**Réglez-la sur le 16 novembre, et gardez-la pour le 14 décembre.** Avec la
+même date, les données sont identiques aux deux séances : un critère
+d'acceptation écrit en novembre (« l'écran affiche 27 besoins ») est encore
+vrai en décembre. La changer entre les deux casserait toutes les recettes.
+
+```bash
+ssh sweet-waters-prod 'bash -s' -- 2026-11-16 rec gta < scripts/preparer-session.sh
+```
+
+Le script sauvegarde `/opt/sirh/.env`, cale la date, donne un nouveau jeton
+aux groupes cités (ici `rec` et `gta`), redémarre l'API et remet le socle à
+zéro. Ne citez des groupes que pour la première séance : en décembre, on
+relance avec la date seule, et les jetons ne bougent pas.
+
+Imprimez ensuite les fiches, qui portent les nouveaux jetons :
+
+```bash
+ssh sweet-waters-prod 'bash -s' < scripts/fiches-groupes.sh
+```
+
+Vérifier enfin que la matière est suffisante :
 
 ```bash
 curl -s "https://sirh-api.govetia.com/besoins?statut=ouvert" \
@@ -117,11 +163,11 @@ Comptez une quinzaine de besoins ouverts minimum par type consommé. Si un
 groupe en manque, ajustez son seuil dans `api/socle/rules/seuils.py`, poussez,
 et rejouez `/admin/besoins/generer`.
 
-### Le matin du jour 1
+### Le matin de la séance
 
 1. `curl https://sirh-api.govetia.com/` répond.
-2. Les six fiches sont distribuées.
-3. Un fork StackBlitz de test affiche l'écran **Besoins identifiés** avec des
+2. Les fiches sont distribuées.
+3. Un StackBlitz de test, ouvert sur une branche de groupe, affiche l'écran **Besoins identifiés** avec des
    lignes. Si oui, l'API, le jeton, le CORS et le réseau sont bons tous les
    quatre.
 
@@ -142,6 +188,20 @@ condition pour que le code fonctionne du premier coup.
 > **Une conversation = un écran.** On ouvre une conversation neuve, on colle
 > l'en-tête, on demande, on colle le fichier rendu dans le projet.
 > On ne réutilise pas une conversation pour un autre écran.
+
+### En-tête 0 — le kit, par défaut
+
+`app/copilot/<branche>.md` contient tout : les règles, le SDK, le contrat et un
+écran modèle. Il est **assemblé à partir du code** par
+`bash scripts/kit-copilot.sh` : relancez-le et commitez dès que le SDK, le
+contrat ou l'écran modèle changent.
+
+Premier message : le kit en pièce jointe, et « Lis-le, puis réponds seulement
+prêt ». Second message : la story copiée depuis GitHub, et leur `module.js`.
+Le kit demande à Copilot de rendre le `.vue` **et** le `module.js` complets.
+
+Les en-têtes A, B et C ci-dessous sont le repli, si leur Copilot refuse la
+pièce jointe.
 
 ### En-tête A — un écran qui lit le socle
 
@@ -221,10 +281,10 @@ est celui qui vous fait la démo**, et c'est lui qui a cadré ce qu'on livre.
 
 | | |
 |---|---|
-| **~10 min** — cadrage | le PO écrit ce qu'on livre à la fin |
+| **~10 min** — cadrage | le PO choisit les stories du sprint dans le tableau, chacune assignée à quelqu'un |
 | **~30 min** — production | conception, prompts, collage, essais |
 | **~5 min** — recette | on vérifie sur le jeu de données, on note ce qui cloche |
-| **~20 min** — passage groupe par groupe | vous passez devant chaque groupe, un par un : démo par le PO, puis rétro, trois minutes environ |
+| **~20 min** — passage groupe par groupe | vous passez devant chaque groupe, un par un : démo par le PO, puis rétro, trois minutes environ. Le PO la consigne dans un ticket « Rétro de sprint » |
 
 C'est ce passage qui fixe la durée réelle d'un sprint. Avec six groupes, il
 prend vingt minutes ; mieux vaut raccourcir la production que sauter un groupe.
@@ -238,18 +298,25 @@ Lyon » **avant** de coder, puis vérifier.
 
 ## 6. Le déroulé des trois jours
 
-### Jour 1 — le sprint 0, après la théorie
+### Jour 1 — 5 octobre : la théorie
 
-La matinée et le début d'après-midi sont consacrés à la théorie, puis à la
-présentation du projet. Le sprint 0 vient ensuite : il ne produit rien, il
-installe les postes.
+Fait. Aucun code : théorie agile et présentation du projet.
 
-Chaque groupe forke le projet dans StackBlitz, crée son `app/.env` à partir de
-sa fiche, lance `npm install` puis `npm run dev`, et fait le tour de
-l'application.
+### Jour 2 — 16 novembre : le sprint 0, puis les premiers sprints
+
+Le sprint 0 ouvre la journée. Il ne produit aucun écran, il installe les
+postes et les outils :
+
+1. chacun accepte son invitation GitHub (envoyée à J-7) ;
+2. chacun se connecte à StackBlitz avec GitHub et ouvre la branche de son
+   groupe, crée son `app/.env` à partir de la fiche, lance `npm install` puis
+   `npm run dev` ;
+3. le groupe ouvre sa première story dans GitHub, avec le formulaire de son
+   groupe, même incomplète.
 
 **Livrable** : sur chaque poste, l'écran **Besoins identifiés** affiche des
-lignes, et le module du groupe porte l'étiquette « votre groupe ».
+lignes et le module du groupe porte l'étiquette « votre groupe » ; chaque
+groupe a au moins une story dans le tableau.
 
 **Vous** : le passage groupe par groupe sert ici à vérifier chaque poste. En
 clôture, chaque groupe désigne son PO du premier sprint.
@@ -311,6 +378,22 @@ candidats recrutés, Mobilité montre les formations suivies.
 Une en fin de jour 2, une en fin de jour 3, devant la classe : chaque PO
 présente son module, cinq à six minutes par groupe.
 
+**Juste avant une démo, fusionnez les branches dans `main`**, pour montrer le
+SIRH assemblé depuis un seul StackBlitz :
+
+```bash
+git fetch origin
+git switch main && git pull
+git merge --no-ff origin/recruitment -m "Démo : module Recrutement"
+git merge --no-ff origin/time-and-attendance -m "Démo : module Gestion des temps et activités"
+git push
+```
+
+Il n'y a pas de conflit possible : chaque groupe n'écrit que dans
+`app/src/modules/<code>/`. Pour la démo, le `.env` du StackBlitz de démo prend
+le code du module à ouvrir — un seul module est ouvrable à la fois, c'est le
+principe du socle.
+
 **La démonstration finale**, au jour 3, suit la chaîne, pas les groupes : un
 entretien annuel → le besoin qu'il a produit → le module qui l'a traité → la
 trace dans le socle. Six modules, un seul récit.
@@ -363,6 +446,10 @@ curl -X POST $API/admin/besoins/generer -H "Authorization: Bearer $JETON"
 | `Ce besoin est de type « … »` | ils prennent le besoin d'un autre | chaque module ne traite que son type |
 | L'écran affiche « n'a pas pu être chargé » | erreur de syntaxe dans leur `.vue` | console du navigateur, puis en-tête C |
 | Le module d'un autre groupe est grisé | c'est voulu | un groupe, un module |
+| StackBlitz propose *Fork* au lieu de *Commit* | invitation GitHub pas acceptée, ou StackBlitz pas connecté avec GitHub | `github.com/LViogeat/sirh-pedagogique-meridien/invitations`, puis se reconnecter |
+| Commit refusé sur `main` | ils ont ouvert le lien de `main`, pas celui de leur branche | rouvrir le lien de leur fiche ; recoller les fichiers |
+| Le travail d'un camarade a disparu après un commit | deux StackBlitz anciens sur la même branche | `git log` sur GitHub : le fichier est dans le commit précédent. Rappeler : rouvrir le lien avant chaque story |
+| Copilot rend un fichier qui importe `axios` ou appelle `fetch` | le kit n'a pas été joint | nouvelle conversation, kit d'abord |
 
 Aucune de ces pannes ne demande d'intervenir sur le serveur. Si vous devez y
 toucher pendant un sprint, c'est le signe que quelque chose n'a pas été prévu —
@@ -374,8 +461,9 @@ notez-le pour l'édition suivante.
 
 **Non négociable**, et c'est ce qui protège une journée de travail :
 
-1. Chaque groupe dépose dans son canal Teams son dossier
-   `app/src/modules/<code>/` **et** son `schema.sql`.
+1. Chaque groupe a **commité** tout ce qui marche, `schema.sql` compris
+   (dans `app/src/modules/<code>/`). Vérifiez-le sur GitHub, dans la liste
+   des branches : la date du dernier commit doit être celle du jour.
 2. Sauvegarde des schémas des groupes :
 
 ```bash
@@ -385,6 +473,47 @@ ssh <serveur> 'docker exec sirh-db-1 pg_dump -U sirh \
 
 Le socle, lui, n'a pas besoin d'être sauvegardé : il se régénère à l'identique.
 
-Si un groupe perd son fork StackBlitz, on reforke le projet et on redépose son
-dossier — deux minutes. C'est de facto leur gestion de versions, sans une
-notion de git à leur apprendre.
+Si un groupe perd son StackBlitz, il rouvre le lien de sa branche : tout ce
+qui a été commité est là. Ce qui ne l'a pas été est perdu — c'est la leçon,
+et elle ne s'oublie pas.
+
+---
+
+## 10. Suivre qui fait quoi
+
+Chaque étudiant commite depuis son propre compte, et chaque story a un
+assigné : la contribution de chacun se lit dans GitHub, sans rien demander.
+
+```bash
+git fetch origin
+
+# Les commits de chacun, sur la branche d'un groupe
+git shortlog -sn main..origin/recruitment
+
+# Le détail : qui, quand, quoi
+git log main..origin/recruitment --format='%an · %ad · %s' --date=format:'%d/%m %H:%M'
+
+# Les stories : qui les a écrites, qui les a prises, où elles en sont
+gh issue list --label recruitment --state all --limit 100 \
+   --json number,title,author,assignees,state \
+   --jq '.[] | "#\(.number) \(.state) · écrite par \(.author.login) · prise par \([.assignees[].login] | join(", ")) · \(.title)"'
+```
+
+Sur GitHub, l'onglet *Insights → Contributors* donne la même chose en
+graphique, et le tableau de sprint, groupé par *Assignees*, montre qui porte
+quoi à tout moment.
+
+Un étudiant sans commit ni story n'a pas forcément rien fait — il a pu
+écrire les critères ou faire la recette. Le ticket de rétro dit qui était PO
+de chaque sprint : c'est la troisième trace.
+
+### Ajouter un groupe
+
+Pour ouvrir un des quatre autres modules (`form`, `mob`, `portail`, `onb`) :
+
+1. ajouter sa ligne dans `GROUPES` de `scripts/github-setup.sh`,
+   `scripts/kit-copilot.sh` et `branche_de` de `scripts/fiches-groupes.sh` ;
+2. copier un formulaire `.github/ISSUE_TEMPLATE/story-*.yml` et adapter les
+   données cochables ;
+3. ajouter le groupe aux menus déroulants de `bug.yml` et `retro.yml` ;
+4. relancer `kit-copilot.sh` puis `github-setup.sh`, commiter.

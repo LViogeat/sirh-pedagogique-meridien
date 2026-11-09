@@ -75,7 +75,7 @@ seul type :
 | Module Recrutement | les besoins de type `recrutement` |
 | Module Formation | les besoins de type `formation` |
 | Module Mobilité & carrière | les besoins de type `mobilite` |
-| Module Gestion des temps | *aucun* |
+| Module Gestion des temps et activités | *aucun* |
 | Module Portail RH & Self-Service | *aucun* |
 | Module Onboarding & Offboarding | *aucun* |
 
@@ -260,7 +260,28 @@ erDiagram
 tourne déjà, en ligne, et tous les groupes tapent dessus. Vous ne faites tourner
 que l'interface.
 
-Ouvrez le projet dans StackBlitz, puis, dans le terminal :
+**Votre groupe a sa branche** dans le dépôt GitHub du cours. C'est là que
+vit votre travail, et nulle part ailleurs :
+
+| Groupe | Branche | Code du module |
+|---|---|---|
+| Recrutement | `recruitment` | `rec` |
+| Gestion des temps et activités | `time-and-attendance` | `gta` |
+
+**Une fois, au début :**
+
+1. Créez votre compte sur [github.com](https://github.com), chacun le sien.
+   Donnez votre identifiant à l'intervenant, puis **acceptez l'invitation**
+   que GitHub vous envoie par mail.
+2. Connectez-vous à [stackblitz.com](https://stackblitz.com) **avec GitHub**.
+
+**À chaque séance**, ouvrez le lien de votre branche (il est sur votre fiche) :
+
+```
+https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/<votre branche>/app
+```
+
+Puis, dans le terminal :
 
 ```bash
 npm install
@@ -322,6 +343,42 @@ export default {
 Créez le fichier `.vue` correspondant, et l'écran apparaît dans le menu, sous
 votre page d'accueil. Le nom et l'icône de votre module sont fixés par le
 socle : votre manifeste ne décrit que vos écrans.
+
+### Le circuit d'une story
+
+C'est le même à chaque fois, et chaque étape laisse une trace dans GitHub :
+
+| | Où | Qui |
+|---|---|---|
+| **1. Écrire la story** | GitHub → *Issues* → *New issue* → le formulaire de votre groupe | n'importe qui, relu par le PO |
+| **2. La placer dans le sprint** | le tableau du cours : colonne *Todo*, champ *Sprint* | le PO |
+| **3. La prendre** | *Assignees* → votre nom, puis colonne *In Progress* | celui qui la code |
+| **4. La faire coder** | Copilot : une conversation neuve, le kit, la story, votre `module.js` | le même |
+| **5. Coller le code** | StackBlitz, dans `app/src/modules/<code>/` | le même |
+| **6. Vérifier** | l'écran, contre les critères d'acceptation de la story | un autre membre du groupe |
+| **7. Commiter** | StackBlitz → *Commit*, message `Écran des offres (#12)` | celui qui l'a codée |
+| **8. Fermer** | la story passe en *Done* | le PO |
+
+**Le kit Copilot** est dans votre projet : `app/copilot/recruitment.md` ou
+`app/copilot/time-and-attendance.md`. Il contient tout ce que Copilot doit
+savoir : les règles, le SDK, le contrat de l'API et un écran modèle.
+**Joignez-le** à la conversation (le trombone) plutôt que de le coller : il
+est long.
+
+**Le numéro `#12` dans le message de commit** relie le code à sa story :
+GitHub affiche le commit dans la story, et la story dans le commit.
+
+Trois règles qui évitent de perdre du travail :
+
+- **Une story, une personne, un fichier.** Deux personnes ne modifient jamais
+  le même fichier en même temps.
+- **`module.js` appartient au PO du sprint.** C'est le seul fichier que tout le
+  groupe partage : on lui envoie la ligne à ajouter, il l'ajoute et commite.
+- **Rouvrez le lien de votre branche avant chaque story.** Un StackBlitz ouvert
+  depuis une heure ne voit pas ce que vos camarades ont commité depuis.
+
+Votre fichier `.env` n'est jamais commité : il contient votre jeton, et le
+dépôt est public.
 
 ---
 
@@ -400,7 +457,7 @@ await relacherBesoin(37)     // pris par erreur : il redevient disponible
 Trois refus possibles, et leurs messages sont explicites :
 
 - le besoin n'est pas du type que votre module traite ;
-- votre module ne consomme aucun besoin (Gestion des temps, Portail RH,
+- votre module ne consomme aucun besoin (Gestion des temps et activités, Portail RH,
   Onboarding) ;
 - un autre groupe l'a déjà pris.
 
@@ -924,6 +981,30 @@ Ces prompts sont faits pour être collés tels quels dans Copilot. Le principe
 est toujours le même : **on donne du contexte réel, on demande un fichier
 complet, on interdit les explications.**
 
+### Prompt 0 — le kit, puis la story
+
+C'est la façon de faire par défaut. **Premier message** d'une conversation
+neuve : joignez `app/copilot/<votre branche>.md`, et écrivez
+
+```
+Voici le kit de mon projet. Lis-le, puis réponds seulement « prêt ».
+```
+
+**Second message** : la story, copiée depuis GitHub, et votre manifeste.
+
+```
+Voici ma user story :
+
+[coller tout le texte de la story, depuis GitHub]
+
+Voici mon module.js actuel :
+
+[coller app/src/modules/<code>/module.js — ou « il n'existe pas encore »]
+```
+
+Copilot rend le fichier `.vue` et le `module.js` mis à jour. Si votre
+Copilot refuse la pièce jointe, utilisez le prompt 1 ci-dessous.
+
 ### Prompt 1 — le contexte, à donner une fois par conversation
 
 ```
@@ -1017,7 +1098,7 @@ Chaque groupe travaille dans `src/modules/<code>/` et possède le schéma
 PostgreSQL du même nom. Il n'ouvre que son module ; les cinq autres sont
 fermés.
 
-### `rec` — Module Recrutement
+### `rec` — Module Recrutement · branche `recruitment`
 
 Offres, candidats, candidatures, processus de recrutement.
 
@@ -1051,7 +1132,7 @@ Opportunités, souhaits d'évolution, mobilités internes, parcours.
 - `getPostes()` — les opportunités, avec leur niveau hiérarchique.
 - `getSalarie(id)` — le parcours contractuel, base d'un plan de carrière.
 
-### `gta` — Module Gestion des temps
+### `gta` — Module Gestion des temps et activités · branche `time-and-attendance`
 
 Pointages, congés, absences, compteurs, planning.
 
@@ -1133,7 +1214,7 @@ six dossiers.
 | `permission denied for table …` | Vous écrivez hors de votre schéma |
 | `relation "…" does not exist` | La table n'existe pas — l'avez-vous créée dans la console ? |
 | `Ce besoin est de type « … ». Le module « … » ne prend en charge que…` | Ce type de besoin appartient à un autre groupe |
-| `Le module « … » ne consomme pas de besoins identifiés` | Gestion des temps, Portail RH et Onboarding n'en traitent aucun |
+| `Le module « … » ne consomme pas de besoins identifiés` | Gestion des temps et activités, Portail RH et Onboarding n'en traitent aucun |
 | `Ce besoin est pris en charge par le module …` | Un autre groupe l'a pris avant vous |
 | `Transition refusée` | `ouvert → pris_en_charge → cloture`, dans cet ordre |
 | L'écran affiche « n'a pas pu être chargé » | Erreur de syntaxe dans votre `.vue` — le détail est dans la console du navigateur |

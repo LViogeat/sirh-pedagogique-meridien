@@ -119,7 +119,7 @@ DATE_REFERENCE=2026-09-15
 
 # code:Libellé:jeton[:type_besoin] — le quatrième champ dit quel type de besoin
 # le module prend en charge. Trois modules seulement en consomment.
-GROUPES=rec:Recrutement:JETON1:recrutement,form:Formation:JETON2:formation,mob:Mobilité & carrière:JETON3:mobilite,gta:Gestion des temps:JETON4,portail:Portail RH & Self-Service:JETON5,onb:Onboarding & Offboarding:JETON6
+GROUPES=rec:Recrutement:JETON1:recrutement,form:Formation:JETON2:formation,mob:Mobilité & carrière:JETON3:mobilite,gta:Gestion des temps et activités:JETON4,portail:Portail RH & Self-Service:JETON5,onb:Onboarding & Offboarding:JETON6
 
 # Ouvre /admin. Ne se distribue pas.
 JETON_ADMIN=...
