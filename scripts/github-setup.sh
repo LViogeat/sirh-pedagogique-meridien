@@ -157,9 +157,30 @@ for g in "${GROUPES[@]}"; do
     echo "    champ « Sprint » créé"
   fi
 
+  # Deux vues : « Backlog » (table, tout) et « Sprint en cours » (colonnes).
+  id_projet=$(gh project view "$numero" --owner "$PROPRIETAIRE" --format json --jq .id)
+  vues=$(gh api graphql -f query='query($p: ID!) { node(id: $p) { ... on ProjectV2 {
+           views(first: 20) { nodes { id name } } } } }' -f p="$id_projet" \
+         --jq '.data.node.views.nodes[] | "\(.id)|\(.name)"')
+  if ! grep -q '|Backlog$' <<<"$vues"; then
+    premiere=$(head -1 <<<"$vues" | cut -d'|' -f1)
+    gh api graphql -f query='mutation($v: ID!) { updateProjectV2View(input: {
+        viewId: $v, name: "Backlog", layout: TABLE_LAYOUT }) { clientMutationId } }' \
+      -f v="$premiere" >/dev/null
+    echo "    vue « Backlog » prête"
+  fi
+  if ! grep -q '|Sprint en cours$' <<<"$vues"; then
+    gh api graphql -f query='mutation($p: ID!) { createProjectV2View(input: {
+        projectId: $p, name: "Sprint en cours", layout: BOARD_LAYOUT }) {
+        projectV2View { id } } }' -f p="$id_projet" \
+      --jq .data.createProjectV2View.projectV2View.id \
+      | xargs -I{} gh api graphql -f query='mutation($v: ID!) { updateProjectV2View(input: {
+          viewId: $v, filter: "sprint:\"Sprint 1\"" }) { clientMutationId } }' -f v={} >/dev/null
+    echo "    vue « Sprint en cours » créée, filtrée sur Sprint 1"
+  fi
+
   # Les membres du groupe, d'après le CSV : droit d'écriture sur CE tableau.
   if [ -n "${1:-}" ]; then
-    id_projet=$(gh project view "$numero" --owner "$PROPRIETAIRE" --format json --jq .id)
     while IFS=, read -r login b; do
       login=$(echo "$login" | tr -d '[:space:]'); b=$(echo "$b" | tr -d '[:space:]')
       [ "$b" = "$branche" ] && [ -n "$login" ] || continue
@@ -180,9 +201,7 @@ for g in "${GROUPES[@]}"; do
   $titre — https://github.com/users/$PROPRIETAIRE/projects/$numero
     1. Workflows → « Auto-add to project » : activer, filtre
          is:issue label:$branche
-    2. Renommer la vue « View 1 » en « Backlog » (vue Table, Group by → Sprint).
-    3. Nouvelle vue Board « Sprint en cours », filtrée sur sprint:\"Sprint 1\"
-       — le PO change le filtre à chaque sprint.
+    2. Vue « Backlog » : Group by → Sprint, puis Save.
 "
 done
 
