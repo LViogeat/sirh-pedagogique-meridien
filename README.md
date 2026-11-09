@@ -94,7 +94,7 @@ sont stables — les références qu'ils stockent restent valables.
 | [`docs/03-conduite-du-cours.md`](docs/03-conduite-du-cours.md) | **Votre document** : jetons, en-têtes Copilot, le déroulé des sprints, les pannes |
 | [`app/copilot/`](app/copilot) | Le kit Copilot de chaque groupe, assemblé par `scripts/kit-copilot.sh` |
 | [`scripts/fiches-groupes.sh`](scripts/fiches-groupes.sh) | Imprime les fiches à distribuer, jetons compris |
-| [`scripts/github-setup.sh`](scripts/github-setup.sh) | Branches, protections, invitations, tableau de sprint |
+| [`scripts/github-setup.sh`](scripts/github-setup.sh) | Branches, protections, invitations, un tableau de sprint par groupe |
 | [`scripts/preparer-session.sh`](scripts/preparer-session.sh) | La veille : date de référence, jetons, remise à zéro |
 
 ---

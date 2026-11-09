@@ -11,6 +11,9 @@
 #   lea-meyer,recruitment
 #   tom-dupont,time-and-attendance
 #
+# Chaque groupe a SON tableau (backlog + sprints), qu'il gère lui-même : ses
+# membres y ont le droit d'écriture, et seulement sur le sien.
+#
 # Le tableau de sprint demande un droit de plus au jeton gh, une seule fois :
 #   gh auth refresh -s project
 #
@@ -20,7 +23,6 @@ set -euo pipefail
 
 REPO="LViogeat/sirh-pedagogique-meridien"
 PROPRIETAIRE="${REPO%%/*}"
-PROJET="Sorbonne-Hôtel — sprints"
 SPRINTS="Sprint 1,Sprint 2,Sprint 3,Sprint 4,Sprint 5,Sprint 6,Sprint 7,Sprint 8,Sprint 9,Sprint 10"
 
 # branche | libellé | couleur de l'étiquette
@@ -109,46 +111,83 @@ if [ -n "${1:-}" ]; then
   echo "  https://github.com/$REPO/invitations"
 fi
 
-# ── 5. Tableau de sprint ─────────────────────────────────────────────────────
-etape "Tableau de sprint"
+# ── 5. Un tableau par groupe ─────────────────────────────────────────────────
+etape "Tableaux des groupes"
 if ! gh project list --owner "$PROPRIETAIRE" --limit 1 >/dev/null 2>&1; then
   echo "  ⚠ Le jeton gh n'a pas le droit « project ». Lancez :"
-  echo "      gh auth refresh -s project"
+  echo "      gh auth refresh -h github.com -s project"
   echo "    puis relancez ce script."
   exit 0
 fi
 
-NUMERO=$(gh project list --owner "$PROPRIETAIRE" --format json \
-  --jq ".projects[] | select(.title == \"$PROJET\") | .number")
-if [ -z "$NUMERO" ]; then
-  NUMERO=$(gh project create --owner "$PROPRIETAIRE" --title "$PROJET" \
-    --format json --jq .number)
-  echo "  projet n°$NUMERO créé"
-else
-  echo "  projet n°$NUMERO existe déjà"
-fi
-gh project link "$NUMERO" --owner "$PROPRIETAIRE" --repo "$REPO" >/dev/null 2>&1 || true
-gh project edit "$NUMERO" --owner "$PROPRIETAIRE" --visibility PUBLIC >/dev/null
+LISEZMOI='Le backlog et les sprints du groupe. **C'"'"'est vous qui le tenez.**
 
-if ! gh project field-list "$NUMERO" --owner "$PROPRIETAIRE" --format json \
-     --jq '.fields[].name' | grep -qx "Sprint"; then
-  gh project field-create "$NUMERO" --owner "$PROPRIETAIRE" --name "Sprint" \
-    --data-type SINGLE_SELECT --single-select-options "$SPRINTS" >/dev/null
-  echo "  champ « Sprint » créé"
-fi
+- **Backlog** : toutes les stories du groupe. Une story sans sprint attend.
+- **Sprint** : au cadrage, le PO choisit les stories du sprint et leur donne
+  le champ *Sprint* ; chacune est assignée à celui qui la code.
+- **Status** : *Todo* → *In Progress* → *Done*. Une story n'\''est *Done* que
+  si ses critères d'\''acceptation ont été vérifiés par un autre membre.
 
-URL_PROJET="https://github.com/users/$PROPRIETAIRE/projects/$NUMERO"
+Une story se crée depuis le dépôt : *Issues → New issue*, le formulaire de
+votre groupe. Elle arrive toute seule ici.'
+
+A_FAIRE=""
+for g in "${GROUPES[@]}"; do
+  IFS='|' read -r branche libelle _ <<<"$g"
+  titre="$libelle — backlog et sprints"
+
+  numero=$(gh project list --owner "$PROPRIETAIRE" --format json --limit 100 \
+    --jq ".projects[] | select(.title == \"$titre\") | .number")
+  if [ -z "$numero" ]; then
+    numero=$(gh project create --owner "$PROPRIETAIRE" --title "$titre" \
+      --format json --jq .number)
+    echo "  $titre : tableau n°$numero créé"
+  else
+    echo "  $titre : tableau n°$numero existe déjà"
+  fi
+
+  gh project link "$numero" --owner "$PROPRIETAIRE" --repo "$REPO" >/dev/null 2>&1 || true
+  gh project edit "$numero" --owner "$PROPRIETAIRE" --visibility PUBLIC \
+    --description "Module $libelle · branche $branche" --readme "$LISEZMOI" >/dev/null
+
+  if ! gh project field-list "$numero" --owner "$PROPRIETAIRE" --format json \
+       --jq '.fields[].name' | grep -qx "Sprint"; then
+    gh project field-create "$numero" --owner "$PROPRIETAIRE" --name "Sprint" \
+      --data-type SINGLE_SELECT --single-select-options "$SPRINTS" >/dev/null
+    echo "    champ « Sprint » créé"
+  fi
+
+  # Les membres du groupe, d'après le CSV : droit d'écriture sur CE tableau.
+  if [ -n "${1:-}" ]; then
+    id_projet=$(gh project view "$numero" --owner "$PROPRIETAIRE" --format json --jq .id)
+    while IFS=, read -r login b; do
+      login=$(echo "$login" | tr -d '[:space:]'); b=$(echo "$b" | tr -d '[:space:]')
+      [ "$b" = "$branche" ] && [ -n "$login" ] || continue
+      id_user=$(gh api "users/$login" --jq .node_id 2>/dev/null) \
+        || { echo "    ⚠ $login : identifiant introuvable"; continue; }
+      gh api graphql -f query='
+        mutation($p: ID!, $u: ID!) {
+          updateProjectV2Collaborators(input: {
+            projectId: $p, collaborators: [{ userId: $u, role: WRITER }]
+          }) { clientMutationId }
+        }' -f p="$id_projet" -f u="$id_user" >/dev/null \
+        && echo "    $login peut écrire dans ce tableau" \
+        || echo "    ⚠ $login : accès au tableau refusé"
+    done < "$1"
+  fi
+
+  A_FAIRE="$A_FAIRE
+  $titre — https://github.com/users/$PROPRIETAIRE/projects/$numero
+    1. Workflows → « Auto-add to project » : activer, filtre
+         is:issue label:$branche
+    2. Renommer la vue « View 1 » en « Backlog » (vue Table, Group by → Sprint).
+    3. Nouvelle vue Board « Sprint en cours », filtrée sur sprint:\"Sprint 1\"
+       — le PO change le filtre à chaque sprint.
+"
+done
+
 cat <<FIN
 
-  Reste à faire à la main, une seule fois (l'API GitHub ne le permet pas) :
-    $URL_PROJET
-
-  1. Workflows → « Auto-add to project » : activer, filtre
-       is:issue,open repo:$REPO
-     Chaque ticket ouvert arrive tout seul dans le tableau.
-  2. Une vue par groupe : dupliquer la vue Board, la renommer, et filtrer
-       label:recruitment            → « Recrutement »
-       label:time-and-attendance    → « Temps et activités »
-  3. Dans chaque vue : Group by → Sprint.
-
+  Reste à faire à la main, une fois par tableau (l'API GitHub ne le permet pas) :
+$A_FAIRE
 FIN

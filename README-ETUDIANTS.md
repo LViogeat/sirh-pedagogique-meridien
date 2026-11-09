@@ -351,13 +351,22 @@ C'est le même à chaque fois, et chaque étape laisse une trace dans GitHub :
 | | Où | Qui |
 |---|---|---|
 | **1. Écrire la story** | GitHub → *Issues* → *New issue* → le formulaire de votre groupe | n'importe qui, relu par le PO |
-| **2. La placer dans le sprint** | le tableau du cours : colonne *Todo*, champ *Sprint* | le PO |
+| **2. La placer dans le sprint** | le tableau de votre groupe : champ *Sprint*, colonne *Todo* | le PO |
 | **3. La prendre** | *Assignees* → votre nom, puis colonne *In Progress* | celui qui la code |
 | **4. La faire coder** | Copilot : une conversation neuve, le kit, la story, votre `module.js` | le même |
 | **5. Coller le code** | StackBlitz, dans `app/src/modules/<code>/` | le même |
 | **6. Vérifier** | l'écran, contre les critères d'acceptation de la story | un autre membre du groupe |
 | **7. Commiter** | StackBlitz → *Commit*, message `Écran des offres (#12)` | celui qui l'a codée |
 | **8. Fermer** | la story passe en *Done* | le PO |
+
+**Votre tableau** est à vous : c'est votre backlog et vos sprints, et vous
+seuls pouvez y écrire. Une story créée avec le formulaire de votre groupe y
+arrive toute seule.
+
+| Groupe | Tableau |
+|---|---|
+| Recrutement | <https://github.com/users/LViogeat/projects/2> |
+| Gestion des temps et activités | <https://github.com/users/LViogeat/projects/3> |
 
 **Le kit Copilot** est dans votre projet : `app/copilot/recruitment.md` ou
 `app/copilot/time-and-attendance.md`. Il contient tout ce que Copilot doit

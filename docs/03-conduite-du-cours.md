@@ -112,15 +112,18 @@ tom-dupont,time-and-attendance
 ```
 
 ```bash
-gh auth refresh -s project               # une fois : le droit de créer le tableau
+gh auth refresh -h github.com -s project # une fois, dans un vrai terminal : le droit de créer les tableaux
 bash scripts/github-setup.sh comptes-github.csv
 ```
 
 Le script crée les étiquettes, les branches des groupes depuis `main`, les
 protections (`main` n'est modifiable que par vous ; les branches des groupes
 ne peuvent être ni supprimées ni réécrites), envoie les invitations et crée le
-tableau de sprint. Il affiche à la fin les trois réglages à faire à la main
-dans le tableau. Il se relance sans risque : chaque nouvel étudiant, on
+**un tableau par groupe** — son backlog et ses sprints, que le groupe tient
+lui-même : ses membres y ont le droit d'écriture, et sur le sien seulement.
+Recrutement : <https://github.com/users/LViogeat/projects/2>, Gestion des
+temps et activités : <https://github.com/users/LViogeat/projects/3>. Le
+script affiche à la fin les trois réglages à faire à la main dans chacun. Il se relance sans risque : chaque nouvel étudiant, on
 l'ajoute au CSV et on relance.
 
 **Les étudiants doivent accepter l'invitation** avant de pouvoir commiter.
@@ -281,7 +284,7 @@ est celui qui vous fait la démo**, et c'est lui qui a cadré ce qu'on livre.
 
 | | |
 |---|---|
-| **~10 min** — cadrage | le PO choisit les stories du sprint dans le tableau, chacune assignée à quelqu'un |
+| **~10 min** — cadrage | le PO choisit les stories du sprint dans le tableau du groupe, chacune assignée à quelqu'un |
 | **~30 min** — production | conception, prompts, collage, essais |
 | **~5 min** — recette | on vérifie sur le jeu de données, on note ce qui cloche |
 | **~20 min** — passage groupe par groupe | vous passez devant chaque groupe, un par un : démo par le PO, puis rétro, trois minutes environ. Le PO la consigne dans un ticket « Rétro de sprint » |
@@ -316,7 +319,7 @@ postes et les outils :
 
 **Livrable** : sur chaque poste, l'écran **Besoins identifiés** affiche des
 lignes et le module du groupe porte l'étiquette « votre groupe » ; chaque
-groupe a au moins une story dans le tableau.
+groupe a au moins une story dans son tableau.
 
 **Vous** : le passage groupe par groupe sert ici à vérifier chaque poste. En
 clôture, chaque groupe désigne son PO du premier sprint.
@@ -500,7 +503,7 @@ gh issue list --label recruitment --state all --limit 100 \
 ```
 
 Sur GitHub, l'onglet *Insights → Contributors* donne la même chose en
-graphique, et le tableau de sprint, groupé par *Assignees*, montre qui porte
+graphique, et le tableau de chaque groupe, groupé par *Assignees*, montre qui porte
 quoi à tout moment.
 
 Un étudiant sans commit ni story n'a pas forcément rien fait — il a pu
