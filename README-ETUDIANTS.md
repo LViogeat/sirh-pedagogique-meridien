@@ -282,25 +282,31 @@ vit votre travail, et nulle part ailleurs :
 **À chaque séance**, ouvrez le lien de votre branche (il est sur votre fiche) :
 
 ```
-https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/<votre branche>/app
+https://stackblitz.com/~/github.com/LViogeat/sirh-pedagogique-meridien/tree/<votre branche>
 ```
 
-Puis, dans le terminal :
+StackBlitz s'ouvre comme un petit VS Code : les fichiers à gauche, l'aperçu
+à droite, et en haut à gauche le bouton **Commit** et le nom de votre branche.
+**Si vous voyez *Fork* au lieu de *Commit*, arrêtez-vous** : vous n'êtes pas
+sur le bon lien, ou pas connecté avec GitHub (voir plus bas).
+
+Si l'aperçu ne démarre pas tout seul, dans le terminal :
 
 ```bash
 npm install
 npm run dev
 ```
 
-Ces deux commandes fonctionnent depuis la racine du projet comme depuis le
-dossier `app/`.
+Si la page reste bloquée sur *Cloning repo from GitHub* plus d'une minute,
+rechargez-la : le second essai est rapide.
 
 > Vous ne verrez jamais de commande `docker` dans ce guide : StackBlitz n'a ni
 > Docker ni noyau Linux, et vous n'en avez pas besoin. L'API est déjà en ligne.
 
-**Créez ensuite votre fichier de configuration.** Il vit dans le dossier
-`app/`, à côté de `package.json` : copiez-y `.env.example` en `.env` et
-remplissez les deux lignes avec ce que l'intervenant vous a remis :
+**Créez ensuite votre fichier de configuration.** Il vit **à la racine** du
+projet, à côté de `README.md` et de `.env.example` (pas dans `app/`) :
+copiez `.env.example` en `.env` et remplissez les deux lignes avec ce que
+l'intervenant vous a remis :
 
 ```
 VITE_API_TOKEN=le-jeton-de-votre-groupe
@@ -357,10 +363,10 @@ C'est le même à chaque fois, et chaque étape laisse une trace dans GitHub :
 | **1. Écrire la story** | GitHub → *Issues* → *New issue* → le formulaire de votre groupe | n'importe qui, relu par le PO |
 | **2. La placer dans le sprint** | le tableau de votre groupe : champ *Sprint*, colonne *Todo* | le PO |
 | **3. La prendre** | *Assignees* → votre nom, puis colonne *In Progress* | celui qui la code |
-| **4. La faire coder** | Copilot : une conversation neuve, le kit, la story, votre `module.js` | le même |
-| **5. Coller le code** | StackBlitz, dans `app/src/modules/<code>/` | le même |
+| **4. La faire coder** | Copilot : une conversation neuve, le kit **collé** (pas de trombone), puis la story et votre `module.js`, dans le même message | le même |
+| **5. Coller le code** | StackBlitz, dans `app/src/modules/<code>/` : le `.vue` **d'abord**, `module.js` ensuite | le même |
 | **6. Vérifier** | l'écran, contre les critères d'acceptation de la story | un autre membre du groupe |
-| **7. Commiter** | StackBlitz → *Commit*, message `Écran des offres (#12)` | celui qui l'a codée |
+| **7. Commiter** | StackBlitz → *Commit* → message `Écran des offres (#12)` → *Commit & Push* | celui qui l'a codée |
 | **8. Fermer** | la story passe en *Done* | le PO |
 
 **Votre tableau** est à vous : c'est votre backlog et vos sprints, et vous
@@ -1235,7 +1241,7 @@ six dossiers.
 
 | Message | Ce qu'il veut dire |
 |---|---|
-| « Il manque votre fichier de configuration » | `app/.env` n'existe pas encore — voir la section 5 |
+| « Il manque votre fichier de configuration » | le `.env` n'existe pas encore à la racine du projet — voir la section 5 |
 | `Jeton inconnu` | `VITE_API_TOKEN` ne correspond à aucun groupe |
 | `L'API ne répond pas` | L'API est arrêtée, ou votre réseau la bloque — prévenez l'intervenant |
 | Une modification de `.env` sans effet | Relancez `npm run dev` : le fichier n'est lu qu'au démarrage |

@@ -88,7 +88,7 @@ leur formulaire de story et leur kit Copilot.
 |---|---|
 | StackBlitz n'est pas filtré | ouvrir le lien de la branche `recruitment`, lancer `npm install` |
 | L'API n'est pas filtrée | ouvrir `https://sirh-api.govetia.com/docs` |
-| StackBlitz commite sur la branche | connecté avec un compte GitHub invité : modifier un fichier, *Commit*, vérifier le commit sur GitHub |
+| StackBlitz commite sur la branche | connecté avec un compte GitHub invité, lien `stackblitz.com/~/github.com/…/tree/<branche>` : modifier un fichier, *Commit & Push*, vérifier le commit sur GitHub, à son nom. Prérequis : l'app GitHub StackBlitz installée sur le dépôt (13/11) |
 | **Le `.env` ne part pas dans le commit** | dans le commit de test, seul le fichier modifié doit apparaître — sinon le jeton est public |
 | Deux commits ne s'écrasent pas | deux StackBlitz ouverts sur la même branche, chacun modifie un fichier différent et commite : les deux modifications doivent rester |
 | Copilot accepte le kit collé | coller `app/copilot/recruitment.md` (27 000 caractères) et une story dans le même message — vérifié le 13/11 sur Copilot Chat (de base) : accepté sans troncature |
@@ -318,7 +318,7 @@ postes et les outils :
 
 1. chacun accepte son invitation GitHub (envoyée à J-7) ;
 2. chacun se connecte à StackBlitz avec GitHub et ouvre la branche de son
-   groupe, crée son `app/.env` à partir de la fiche, lance `npm install` puis
+   groupe, crée son `.env` à la racine à partir de la fiche, lance `npm install` puis
    `npm run dev` ;
 3. le groupe ouvre sa première story dans GitHub, avec le formulaire de son
    groupe, même incomplète.
@@ -449,7 +449,7 @@ curl -X POST $API/admin/besoins/generer -H "Authorization: Bearer $JETON"
 
 | Symptôme | Cause | Réponse |
 |---|---|---|
-| « Il manque votre fichier de configuration » | pas de `app/.env` | leur fiche, section 2 |
+| « Il manque votre fichier de configuration » | pas de `.env` à la racine (souvent créé dans `app/` par erreur) | leur fiche, section 2 |
 | `Could not read package.json` | ils sont dans le mauvais dossier | `npm install` marche depuis la racine ou `app/` — sinon ils ont une version du dépôt antérieure au 15/09 |
 | Le `.env` est créé mais rien ne change | Vite lit `.env` au démarrage | relancer `npm run dev` |
 | `Jeton inconnu` | jeton mal recopié | comparer à la fiche, attention aux espaces |

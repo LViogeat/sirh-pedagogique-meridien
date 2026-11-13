@@ -5,6 +5,9 @@ import Components from 'unplugin-vue-components/vite'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 
 export default defineConfig({
+  // Le .env se lit à la RACINE du dépôt, pas dans app/ : c'est là que
+  // StackBlitz, ouvert en mode Git sur une branche, place le projet.
+  envDir: fileURLToPath(new URL('..', import.meta.url)),
   plugins: [
     vue(),
     // Auto-import des composants PrimeVue : <DataTable>, <Button>, <Dialog>…

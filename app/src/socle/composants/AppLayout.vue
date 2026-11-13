@@ -86,7 +86,7 @@ const ouvert = ref(false)
 
       <div class="pied">
         <small v-if="monModule">Vous êtes le groupe <strong>{{ monModule.label }}</strong>.</small>
-        <small v-else class="alerte">Aucun module attribué — vérifiez app/.env.</small>
+        <small v-else class="alerte">Aucun module attribué — vérifiez le fichier .env à la racine du projet.</small>
       </div>
     </aside>
 

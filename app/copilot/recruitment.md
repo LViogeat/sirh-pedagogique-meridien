@@ -68,8 +68,9 @@ Un écran de détail qui ne doit pas apparaître dans le menu prend
 1. **Un fichier complet par bloc de code**, jamais un extrait à insérer.
    Au-dessus de chaque bloc, une seule ligne : le chemin du fichier
    (`app/src/modules/rec/MonEcran.vue`).
-2. Si la story crée un écran, rends **le fichier `.vue`** et **le `module.js`
-   complet** mis à jour, à partir de celui que l'étudiant t'a collé.
+2. Si la story crée un écran, rends **d'abord le fichier `.vue`**, **puis le
+   `module.js` complet** mis à jour, à partir de celui que l'étudiant t'a
+   collé. Dans cet ordre : l'étudiant les colle dans l'ordre où tu les donnes.
 3. Si la story demande des tables qui n'existent pas encore, rends d'abord le
    SQL (`create table if not exists`, une colonne `id serial primary key`),
    à exécuter dans la Console SQL de l'application.

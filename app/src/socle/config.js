@@ -1,7 +1,8 @@
 /**
  * Les trois valeurs qui changent d'un groupe à l'autre.
  *
- * Elles viennent du fichier `.env` placé à la racine de `app/`. Copiez
+ * Elles viennent du fichier `.env` placé à la racine du dépôt (pas dans
+ * `app/` : voir `envDir` dans vite.config.js). Copiez
  * `.env.example`, remplissez les deux lignes, redémarrez `npm run dev`.
  *
  * L'URL de l'API a une valeur par défaut : c'est celle du serveur du cours.

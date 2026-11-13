@@ -12,7 +12,8 @@ Depuis la racine du dépôt, les deux mêmes commandes fonctionnent aussi.
 
 ## Configuration
 
-Copiez `.env.example` en `.env`, dans ce dossier, et remplissez les deux lignes
+Copiez `.env.example` en `.env`, **à la racine du dépôt** (pas dans ce dossier :
+Vite y est réglé par `envDir`), et remplissez les deux lignes
 avec ce que l'intervenant vous a remis :
 
 ```

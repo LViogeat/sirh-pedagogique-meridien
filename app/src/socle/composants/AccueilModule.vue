@@ -97,7 +97,7 @@ const ecrans = computed(() => (monModule?.routes || []).filter((r) => !r.socle))
 
   <Message v-else severity="error" :closable="false">
     Aucun module n’est attribué à cette instance. Vérifiez
-    <code>VITE_MODULE_CODE</code> dans <code>app/.env</code>.
+    <code>VITE_MODULE_CODE</code> dans le <code>.env</code> à la racine du projet.
   </Message>
 </template>
 

@@ -62,7 +62,7 @@ for (const [chemin, m] of Object.entries(trouves)) {
 if (MODULE_CODE && !GROUPES.some((g) => g.code === MODULE_CODE)) {
   console.error(
     `[SIRH] VITE_MODULE_CODE vaut « ${MODULE_CODE} », qui n'est le code d'aucun ` +
-    `groupe. Corrigez le fichier app/.env. Codes attendus : ` +
+    `groupe. Corrigez le fichier .env, à la racine du projet. Codes attendus : ` +
     GROUPES.map((g) => g.code).join(', '),
   )
 }

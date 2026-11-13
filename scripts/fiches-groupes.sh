@@ -49,19 +49,21 @@ echo "$GROUPES" | tr ',' '\n' | while IFS=: read -r code libelle jeton besoin; d
      puis accepte l'invitation reçue par mail.
 
   2. Ouvrez StackBlitz, connectez-vous avec GitHub, puis ouvrez VOTRE branche :
-     https://stackblitz.com/github/$DEPOT/tree/$branche/app
+     https://stackblitz.com/~/github.com/$DEPOT/tree/$branche
+     En haut à gauche : bouton « Commit ». Si vous voyez « Fork », stop.
 
-  3. Créez un fichier « .env » dans le dossier app/, à côté de
-     package.json, avec ces deux lignes :
+  3. Créez un fichier « .env » À LA RACINE du projet (à côté de
+     README.md, PAS dans app/), avec ces deux lignes :
 
      VITE_API_TOKEN=$jeton
      VITE_MODULE_CODE=$code
 
-  4. Dans le terminal :  npm install  puis  npm run dev
+  4. Si l'aperçu ne redémarre pas : terminal, Ctrl+C, puis  npm run dev
 
   5. Pour coder une story avec Copilot : ouvrez app/copilot/$branche.md,
      copiez TOUT, collez-le dans Copilot (pas de trombone), puis collez la
-     story et votre module.js dessous, dans le même message.
+     story et votre module.js dessous, dans le même message. Collez le
+     .vue rendu AVANT le module.js.
 
   Votre branche : $branche
   Créer une story : https://github.com/$DEPOT/issues/new?template=story-$branche.yml

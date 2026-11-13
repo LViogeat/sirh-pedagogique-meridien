@@ -36,14 +36,18 @@ compte GitHub :
 | Onboarding & Offboarding | `onboarding-and-offboarding` | `onb` |
 
 ```
-https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/recruitment/app
+https://stackblitz.com/~/github.com/LViogeat/sirh-pedagogique-meridien/tree/recruitment
 ```
 
 `main` n'est modifiable que par l'intervenant : c'est lui qui y fusionne les
 branches avant une démo. Le travail des groupes se suit dans les tickets
 (user stories, bugs, rétros) et dans l'historique de leur branche.
 
-Le groupe copie ensuite `app/.env.example` en `app/.env` et y met deux
+Ce lien ouvre StackBlitz en mode Git (bouton *Commit*) : l'app GitHub de
+StackBlitz doit être installée sur ce dépôt, sinon le push est refusé. La forme
+`stackblitz.com/github/…/app` n'ouvre qu'une copie en lecture seule (*Fork*).
+
+Le groupe copie ensuite `.env.example` en `.env`, à la racine, et y met deux
 lignes, son jeton et le code de son module :
 
 ```
