@@ -76,9 +76,8 @@ excellent point de cours, justement.
 ## 3. Avant chaque séance
 
 Les séances : **5 octobre** (théorie, fait), **lundi 16 novembre**,
-**lundi 14 décembre 2026**. Deux groupes sûrs pour démarrer : Recrutement et
-Gestion des temps et activités. Les autres s'ajoutent avec eux (voir
-« Ajouter un groupe », section 10).
+**lundi 14 décembre 2026**. Les six groupes ont leur branche, leur tableau,
+leur formulaire de story et leur kit Copilot.
 
 ### J-7 — le test qui conditionne tout
 
@@ -121,9 +120,11 @@ protections (`main` n'est modifiable que par vous ; les branches des groupes
 ne peuvent être ni supprimées ni réécrites), envoie les invitations et crée le
 **un tableau par groupe** — son backlog et ses sprints, que le groupe tient
 lui-même : ses membres y ont le droit d'écriture, et sur le sien seulement.
-Recrutement : <https://github.com/users/LViogeat/projects/2>, Gestion des
-temps et activités : <https://github.com/users/LViogeat/projects/3>. Le
-script affiche à la fin les trois réglages à faire à la main dans chacun. Il se relance sans risque : chaque nouvel étudiant, on
+Les tableaux portent les numéros 2 (Recrutement), 3 (Gestion des temps et
+activités), 4 (Formation), 5 (Mobilité & carrière), 6 (Portail RH) et
+7 (Onboarding), sous `https://github.com/users/LViogeat/projects/<n°>`. Pour
+un nouveau tableau, le script affiche à la fin les deux réglages à faire à la
+main. Il se relance sans risque : chaque nouvel étudiant, on
 l'ajoute au CSV et on relance.
 
 **Les étudiants doivent accepter l'invitation** avant de pouvoir commiter.
@@ -389,6 +390,10 @@ git fetch origin
 git switch main && git pull
 git merge --no-ff origin/recruitment -m "Démo : module Recrutement"
 git merge --no-ff origin/time-and-attendance -m "Démo : module Gestion des temps et activités"
+git merge --no-ff origin/training -m "Démo : module Formation"
+git merge --no-ff origin/career-and-mobility -m "Démo : module Mobilité & carrière"
+git merge --no-ff origin/employee-self-service -m "Démo : module Portail RH & Self-Service"
+git merge --no-ff origin/onboarding-and-offboarding -m "Démo : module Onboarding & Offboarding"
 git push
 ```
 
@@ -512,7 +517,8 @@ de chaque sprint : c'est la troisième trace.
 
 ### Ajouter un groupe
 
-Pour ouvrir un des quatre autres modules (`form`, `mob`, `portail`, `onb`) :
+Les six modules du socle sont ouverts. Si un jour il en faut un septième, ou
+qu'on renomme une branche :
 
 1. ajouter sa ligne dans `GROUPES` de `scripts/github-setup.sh`,
    `scripts/kit-copilot.sh` et `branche_de` de `scripts/fiches-groupes.sh` ;

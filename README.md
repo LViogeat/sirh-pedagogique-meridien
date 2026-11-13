@@ -30,6 +30,10 @@ compte GitHub :
 |---|---|---|
 | Recrutement | `recruitment` | `rec` |
 | Gestion des temps et activités | `time-and-attendance` | `gta` |
+| Formation | `training` | `form` |
+| Mobilité & carrière | `career-and-mobility` | `mob` |
+| Portail RH & Self-Service | `employee-self-service` | `portail` |
+| Onboarding & Offboarding | `onboarding-and-offboarding` | `onb` |
 
 ```
 https://stackblitz.com/github/LViogeat/sirh-pedagogique-meridien/tree/recruitment/app

@@ -267,6 +267,10 @@ vit votre travail, et nulle part ailleurs :
 |---|---|---|
 | Recrutement | `recruitment` | `rec` |
 | Gestion des temps et activités | `time-and-attendance` | `gta` |
+| Formation | `training` | `form` |
+| Mobilité & carrière | `career-and-mobility` | `mob` |
+| Portail RH & Self-Service | `employee-self-service` | `portail` |
+| Onboarding & Offboarding | `onboarding-and-offboarding` | `onb` |
 
 **Une fois, au début :**
 
@@ -367,9 +371,16 @@ arrive toute seule.
 |---|---|
 | Recrutement | <https://github.com/users/LViogeat/projects/2> |
 | Gestion des temps et activités | <https://github.com/users/LViogeat/projects/3> |
+| Formation | <https://github.com/users/LViogeat/projects/4> |
+| Mobilité & carrière | <https://github.com/users/LViogeat/projects/5> |
+| Portail RH & Self-Service | <https://github.com/users/LViogeat/projects/6> |
+| Onboarding & Offboarding | <https://github.com/users/LViogeat/projects/7> |
 
-**Le kit Copilot** est dans votre projet : `app/copilot/recruitment.md` ou
-`app/copilot/time-and-attendance.md`. Il contient tout ce que Copilot doit
+**Pour créer une story**, le lien est sur votre fiche : il ouvre directement
+le formulaire de votre groupe
+(`…/issues/new?template=story-<votre branche>.yml`).
+
+**Le kit Copilot** est dans votre projet : `app/copilot/<votre branche>.md`. Il contient tout ce que Copilot doit
 savoir : les règles, le SDK, le contrat de l'API et un écran modèle.
 **Joignez-le** à la conversation (le trombone) plutôt que de le coller : il
 est long.
@@ -1120,7 +1131,7 @@ Offres, candidats, candidatures, processus de recrutement.
 - `getPoste(id)` — les compétences attendues, pour rédiger l'offre.
 - Vous clôturez un besoin quand le poste est pourvu.
 
-### `form` — Module Formation
+### `form` — Module Formation · branche `training`
 
 Catalogue, sessions, inscriptions, suivi.
 
@@ -1131,7 +1142,7 @@ Catalogue, sessions, inscriptions, suivi.
 - `getSalaries()` — les inscrits.
 - Vous clôturez un besoin quand le salarié a suivi la session.
 
-### `mob` — Module Mobilité & carrière
+### `mob` — Module Mobilité & carrière · branche `career-and-mobility`
 
 Opportunités, souhaits d'évolution, mobilités internes, parcours.
 
@@ -1155,7 +1166,7 @@ sur les salariés et leurs contrats.
   bornent les droits.
 - `getDepartements()` — la maille de planification.
 
-### `portail` — Module Portail RH & Self-Service
+### `portail` — Module Portail RH & Self-Service · branche `employee-self-service`
 
 Demandes RH, informations personnelles, documents, workflows.
 
@@ -1169,7 +1180,7 @@ sur les salariés et la hiérarchie managériale.
 - `direct_reports_count` sur la fiche : sait-on si quelqu'un est manager.
 - `getReferentiels()` — pour typer vos demandes.
 
-### `onb` — Module Onboarding & Offboarding
+### `onb` — Module Onboarding & Offboarding · branche `onboarding-and-offboarding`
 
 Parcours d'arrivée et de départ, checklists, tâches, matériel.
 

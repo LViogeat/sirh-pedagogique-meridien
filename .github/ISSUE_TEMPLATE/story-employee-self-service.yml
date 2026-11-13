@@ -98,5 +98,3 @@ body:
       options:
         - label: Le PO l'a relue et elle tient en un écran
           required: true
-        - label: Les critères contiennent au moins un chiffre vérifiable dans le socle
-          required: true
