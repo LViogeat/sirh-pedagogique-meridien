@@ -1,0 +1,102 @@
+name: "User story — Formation"
+description: Une fonctionnalité du module Formation, rédigée pour être donnée à Copilot.
+title: "[Formation] "
+labels: ["user-story", "training"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Une story = un écran = un fichier `.vue`.** Si votre story demande deux écrans, faites-en deux.
+        Ce que vous écrivez ici est ce que vous collerez dans Copilot : plus c'est précis, plus le code marche du premier coup.
+
+  - type: input
+    id: role
+    attributes:
+      label: En tant que…
+      description: Qui utilise l'écran ? Un rôle de l'hôtel, pas « l'utilisateur ».
+      placeholder: "responsable formation du siège"
+    validations:
+      required: true
+
+  - type: textarea
+    id: besoin
+    attributes:
+      label: Je veux…
+      description: Ce que la personne fait sur l'écran. Des verbes, pas des boutons.
+      placeholder: "voir les besoins de formation ouverts par compétence, et inscrire un salarié à une session"
+    validations:
+      required: true
+
+  - type: input
+    id: but
+    attributes:
+      label: Afin de…
+      description: Pourquoi c'est utile. Si vous ne savez pas le dire, la story n'est pas prête.
+      placeholder: "combler les écarts relevés en entretien annuel avant la prochaine campagne"
+    validations:
+      required: true
+
+  - type: input
+    id: ecran
+    attributes:
+      label: Le fichier de l'écran
+      description: "Son nom, dans app/src/modules/form/. En PascalCase, terminé par .vue."
+      placeholder: "BesoinsParCompetence.vue"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: donnees
+    attributes:
+      label: Les données que l'écran lit
+      description: Cochez tout ce qui sert. C'est ce qui dira à Copilot quelles fonctions du SDK utiliser.
+      options:
+        - label: "Besoins de formation — getBesoins({ typeBesoin: 'formation' })"
+        - label: "Compétences, le référentiel du catalogue — getCompetences()"
+        - label: "Entretiens : niveau attendu, niveau constaté — getEntretien(id)"
+        - label: "Salariés — getSalaries() / getSalarie(id)"
+        - label: "Établissements et départements"
+        - label: "Nos propres tables (schéma form)"
+
+  - type: textarea
+    id: tables
+    attributes:
+      label: Nos tables utilisées
+      description: "Si l'écran lit ou écrit dans vos tables : leur nom et leurs colonnes. Collez le create table."
+      render: sql
+
+  - type: textarea
+    id: criteres
+    attributes:
+      label: Critères d'acceptation
+      description: |
+        Écrits AVANT de coder, vérifiés APRÈS. Les données du cours ne changent jamais : mettez des chiffres.
+        Parcourez le socle pour les trouver.
+      value: |
+        Étant donné que je suis sur l'écran …
+        Quand je …
+        Alors je vois … (un chiffre précis : par exemple « 126 besoins de formation », « 30 compétences au référentiel »)
+    validations:
+      required: true
+
+  - type: textarea
+    id: hors
+    attributes:
+      label: Ce que la story ne fait pas
+      description: Ce que vous laissez pour plus tard. Ça évite que Copilot en fasse trop.
+
+  - type: textarea
+    id: maquette
+    attributes:
+      label: Maquette
+      description: Un croquis photographié, une capture annotée. Glissez l'image ici.
+
+  - type: checkboxes
+    id: pret
+    attributes:
+      label: La story est prête quand…
+      options:
+        - label: Le PO l'a relue et elle tient en un écran
+          required: true
+        - label: Les critères contiennent au moins un chiffre vérifiable dans le socle
+          required: true

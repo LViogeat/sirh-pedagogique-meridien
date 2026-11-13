@@ -29,6 +29,10 @@ SPRINTS="Sprint 1,Sprint 2,Sprint 3,Sprint 4,Sprint 5,Sprint 6,Sprint 7,Sprint 8
 GROUPES=(
   "recruitment|Recrutement|0E8A16"
   "time-and-attendance|Gestion des temps et activités|1D76DB"
+  "training|Formation|5319E7"
+  "career-and-mobility|Mobilité & carrière|D93F0B"
+  "employee-self-service|Portail RH & Self-Service|006B75"
+  "onboarding-and-offboarding|Onboarding & Offboarding|B60205"
 )
 
 etape() { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }

@@ -20,6 +20,10 @@ branche_de() {
   case "$1" in
     rec) echo recruitment ;;
     gta) echo time-and-attendance ;;
+    form) echo training ;;
+    mob) echo career-and-mobility ;;
+    portail) echo employee-self-service ;;
+    onb) echo onboarding-and-offboarding ;;
     *)   echo "" ;;
   esac
 }
@@ -56,6 +60,7 @@ echo "$GROUPES" | tr ',' '\n' | while IFS=: read -r code libelle jeton besoin; d
   4. Dans le terminal :  npm install  puis  npm run dev
 
   Votre branche : $branche
+  Créer une story : https://github.com/$DEPOT/issues/new?template=story-$branche.yml
   Vos tickets : https://github.com/$DEPOT/issues?q=label%3A$branche
 
   Votre schéma de base de données : $code

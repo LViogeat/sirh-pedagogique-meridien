@@ -23,6 +23,10 @@ mkdir -p "$SORTIE"
 GROUPES=(
   "recruitment|rec|Recrutement|recrutement|les besoins de recrutement, les postes (effectif cible et réel), les contrats et leurs échéances"
   "time-and-attendance|gta|Gestion des temps et activités||les salariés et leur temps de travail (work_time_ratio), les contrats actifs, les établissements et les départements"
+  "training|form|Formation|formation|les besoins de formation (un salarié + une compétence), le référentiel de compétences, les entretiens et leurs écarts de niveau, les salariés"
+  "career-and-mobility|mob|Mobilité & carrière|mobilite|les besoins de mobilité, les souhaits d'évolution exprimés en entretien (aspirations), les postes et leur niveau hiérarchique, le parcours contractuel des salariés"
+  "employee-self-service|portail|Portail RH & Self-Service||la fiche salarié, la hiérarchie managériale (manager_id, manager_name, direct_reports_count) qui sert de circuit de validation, les référentiels"
+  "onboarding-and-offboarding|onb|Onboarding & Offboarding||les arrivées (joined_on, contrats à venir) et les départs (left_on), les postes et leurs compétences attendues, les départements"
 )
 
 bloc() {  # bloc <langage> <fichier>

@@ -10,6 +10,10 @@ body:
       options:
         - Recrutement
         - Gestion des temps et activités
+        - Formation
+        - Mobilité & carrière
+        - Portail RH & Self-Service
+        - Onboarding & Offboarding
     validations:
       required: true
 
