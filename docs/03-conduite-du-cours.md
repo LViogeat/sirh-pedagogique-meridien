@@ -460,6 +460,7 @@ curl -X POST $API/admin/besoins/generer -H "Authorization: Bearer $JETON"
 | L'écran affiche « n'a pas pu être chargé » | erreur de syntaxe dans leur `.vue` | console du navigateur, puis en-tête C |
 | Le module d'un autre groupe est grisé | c'est voulu | un groupe, un module |
 | StackBlitz reste bloqué sur *Cloning repo from GitHub* | lenteur au premier import (vu le 13/11 : plus d'une minute) | recharger la page : le second essai prend 20 s |
+| Un groupe a un projet `stackblitz.com/edit/…` | Cmd+S sans droit de commit : StackBlitz crée un fork **public, `.env` compris** (vu le 13/11) | changer le jeton du groupe (`preparer-session.sh <date> <code>`), supprimer le fork, régler l'invitation GitHub |
 | StackBlitz propose *Fork* au lieu de *Commit* | invitation GitHub pas acceptée, ou StackBlitz pas connecté avec GitHub | `github.com/LViogeat/sirh-pedagogique-meridien/invitations`, puis se reconnecter |
 | Commit refusé sur `main` | ils ont ouvert le lien de `main`, pas celui de leur branche | rouvrir le lien de leur fiche ; recoller les fichiers |
 | Le travail d'un camarade a disparu après un commit | deux StackBlitz anciens sur la même branche | `git log` sur GitHub : le fichier est dans le commit précédent. Rappeler : rouvrir le lien avant chaque story |

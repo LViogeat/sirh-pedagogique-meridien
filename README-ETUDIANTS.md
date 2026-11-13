@@ -401,6 +401,12 @@ Trois règles qui évitent de perdre du travail :
 Votre fichier `.env` n'est jamais commité : il contient votre jeton, et le
 dépôt est public.
 
+**Attention au *Fork* de StackBlitz.** Si l'adresse devient
+`stackblitz.com/edit/…` ou si le bouton en haut dit *Fork* au lieu de
+*Commit*, StackBlitz a enregistré une copie **publique** du projet, `.env`
+compris : votre jeton est visible de tous. Prévenez l'intervenant, qui le
+changera, et rouvrez le lien de votre branche depuis votre fiche.
+
 ---
 
 ## 6. Deux façons d'accéder aux données
