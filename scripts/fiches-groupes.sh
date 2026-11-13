@@ -59,6 +59,10 @@ echo "$GROUPES" | tr ',' '\n' | while IFS=: read -r code libelle jeton besoin; d
 
   4. Dans le terminal :  npm install  puis  npm run dev
 
+  5. Pour coder une story avec Copilot : ouvrez app/copilot/$branche.md,
+     copiez TOUT, collez-le dans Copilot (pas de trombone), puis collez la
+     story et votre module.js dessous, dans le même message.
+
   Votre branche : $branche
   Créer une story : https://github.com/$DEPOT/issues/new?template=story-$branche.yml
   Vos tickets : https://github.com/$DEPOT/issues?q=label%3A$branche

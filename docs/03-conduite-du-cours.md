@@ -91,7 +91,7 @@ leur formulaire de story et leur kit Copilot.
 | StackBlitz commite sur la branche | connecté avec un compte GitHub invité : modifier un fichier, *Commit*, vérifier le commit sur GitHub |
 | **Le `.env` ne part pas dans le commit** | dans le commit de test, seul le fichier modifié doit apparaître — sinon le jeton est public |
 | Deux commits ne s'écrasent pas | deux StackBlitz ouverts sur la même branche, chacun modifie un fichier différent et commite : les deux modifications doivent rester |
-| Copilot accepte le kit en pièce jointe | joindre `app/copilot/recruitment.md` (27 000 caractères), demander « prêt » |
+| Copilot accepte le kit collé | coller `app/copilot/recruitment.md` (27 000 caractères) et une story dans le même message — vérifié le 13/11 sur Copilot Chat (de base) : accepté sans troncature |
 | Copilot code une story | coller une story d'exemple : le fichier rendu doit s'afficher sans erreur |
 | Copilot permet de créer un agent | Copilot Chat → *Agents* → *Créer un agent*. Si oui : un agent « Dev SIRH » avec les instructions du kit, et le kit en connaissance |
 
@@ -200,12 +200,17 @@ condition pour que le code fonctionne du premier coup.
 `bash scripts/kit-copilot.sh` : relancez-le et commitez dès que le SDK, le
 contrat ou l'écran modèle changent.
 
-Premier message : le kit en pièce jointe, et « Lis-le, puis réponds seulement
-prêt ». Second message : la story copiée depuis GitHub, et leur `module.js`.
-Le kit demande à Copilot de rendre le `.vue` **et** le `module.js` complets.
+Un seul message : le kit **collé** en entier, puis, dessous, la story copiée
+depuis GitHub et leur `module.js`. Le kit demande à Copilot de rendre le
+`.vue` **et** le `module.js` complets.
 
-Les en-têtes A, B et C ci-dessous sont le repli, si leur Copilot refuse la
-pièce jointe.
+**Jamais en pièce jointe.** Testé le 13/11 sur Copilot Chat (de base) : joint
+avec le trombone, le kit est traité comme une source documentaire, et Copilot
+rend un store Vuex au mauvais chemin avec des imports inventés. Collé, il rend
+du premier coup un écran conforme (SDK, toasts, `formatDate`, `module.js`).
+
+Les en-têtes A, B et C ci-dessous sont le repli, si leur Copilot tronque le
+message.
 
 ### En-tête A — un écran qui lit le socle
 
@@ -454,10 +459,11 @@ curl -X POST $API/admin/besoins/generer -H "Authorization: Bearer $JETON"
 | `Ce besoin est de type « … »` | ils prennent le besoin d'un autre | chaque module ne traite que son type |
 | L'écran affiche « n'a pas pu être chargé » | erreur de syntaxe dans leur `.vue` | console du navigateur, puis en-tête C |
 | Le module d'un autre groupe est grisé | c'est voulu | un groupe, un module |
+| StackBlitz reste bloqué sur *Cloning repo from GitHub* | lenteur au premier import (vu le 13/11 : plus d'une minute) | recharger la page : le second essai prend 20 s |
 | StackBlitz propose *Fork* au lieu de *Commit* | invitation GitHub pas acceptée, ou StackBlitz pas connecté avec GitHub | `github.com/LViogeat/sirh-pedagogique-meridien/invitations`, puis se reconnecter |
 | Commit refusé sur `main` | ils ont ouvert le lien de `main`, pas celui de leur branche | rouvrir le lien de leur fiche ; recoller les fichiers |
 | Le travail d'un camarade a disparu après un commit | deux StackBlitz anciens sur la même branche | `git log` sur GitHub : le fichier est dans le commit précédent. Rappeler : rouvrir le lien avant chaque story |
-| Copilot rend un fichier qui importe `axios` ou appelle `fetch` | le kit n'a pas été joint | nouvelle conversation, kit d'abord |
+| Copilot rend un fichier qui importe `axios` ou appelle `fetch`, ou un store Vuex | le kit n'a pas été donné, ou il a été joint avec le trombone au lieu d'être collé | nouvelle conversation, kit **collé** puis story dans le même message |
 
 Aucune de ces pannes ne demande d'intervenir sur le serveur. Si vous devez y
 toucher pendant un sprint, c'est le signe que quelque chose n'a pas été prévu —

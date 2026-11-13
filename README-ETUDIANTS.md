@@ -382,8 +382,9 @@ le formulaire de votre groupe
 
 **Le kit Copilot** est dans votre projet : `app/copilot/<votre branche>.md`. Il contient tout ce que Copilot doit
 savoir : les règles, le SDK, le contrat de l'API et un écran modèle.
-**Joignez-le** à la conversation (le trombone) plutôt que de le coller : il
-est long.
+**Collez-le en entier** dans le message, ne le joignez pas avec le trombone :
+en pièce jointe, Copilot le lit comme un document de référence et ignore ses
+consignes (il invente alors des fichiers qui ne marchent pas).
 
 **Le numéro `#12` dans le message de commit** relie le code à sa story :
 GitHub affiche le commit dans la story, et la story dans le commit.
@@ -1003,14 +1004,13 @@ complet, on interdit les explications.**
 
 ### Prompt 0 — le kit, puis la story
 
-C'est la façon de faire par défaut. **Premier message** d'une conversation
-neuve : joignez `app/copilot/<votre branche>.md`, et écrivez
+C'est la façon de faire par défaut. **Un seul message**, dans une
+conversation neuve :
 
-```
-Voici le kit de mon projet. Lis-le, puis réponds seulement « prêt ».
-```
-
-**Second message** : la story, copiée depuis GitHub, et votre manifeste.
+1. Ouvrez `app/copilot/<votre branche>.md` dans StackBlitz, Cmd+A, Cmd+C,
+   et **collez** dans Copilot. Ne le joignez pas avec le trombone : en pièce
+   jointe, Copilot ignore les consignes du kit.
+2. Toujours dans le même message, sous le kit, collez :
 
 ```
 Voici ma user story :
@@ -1022,8 +1022,10 @@ Voici mon module.js actuel :
 [coller app/src/modules/<code>/module.js — ou « il n'existe pas encore »]
 ```
 
-Copilot rend le fichier `.vue` et le `module.js` mis à jour. Si votre
-Copilot refuse la pièce jointe, utilisez le prompt 1 ci-dessous.
+3. Envoyez. Copilot rend le fichier `.vue` et le `module.js` mis à jour.
+
+Le message fait près de 30 000 caractères : c'est normal, Copilot l'accepte.
+Si votre Copilot le tronque, utilisez le prompt 1 ci-dessous.
 
 ### Prompt 1 — le contexte, à donner une fois par conversation
 

@@ -4,8 +4,9 @@
 #
 # Copilot ne voit pas le projet. Ce fichier lui donne d'un coup tout ce qu'il
 # doit savoir : les règles, le SDK, le contrat de données et un écran modèle.
-# Les étudiants le joignent (ou le collent) en premier message d'une
-# conversation, puis collent leur user story.
+# Les étudiants le COLLENT en entier dans le message, puis leur user story
+# en dessous. Testé le 13/11/2026 : en pièce jointe, Copilot Chat le traite
+# comme une source documentaire et ignore les consignes.
 #
 # Le kit est ASSEMBLÉ à partir du code : relancez ce script dès que le SDK,
 # le contrat ou l'écran modèle changent, et commitez le résultat.
@@ -49,10 +50,12 @@ for ligne in "${GROUPES[@]}"; do
     cat <<EOF
 # Kit Copilot — Module $libelle
 
-> **Mode d'emploi.** Ouvrez une conversation neuve. Joignez ce fichier, ou
-> collez-le en entier, en premier message. Puis collez votre user story telle
-> qu'elle est écrite dans GitHub, **et votre \`module.js\` actuel**. Une
-> conversation par story : pour la story suivante, on recommence.
+> **Mode d'emploi.** Ouvrez une conversation neuve. Copiez **tout** ce
+> fichier (Cmd+A, Cmd+C) et **collez-le** dans le message — ne le joignez pas
+> avec le trombone, Copilot ignorerait les consignes. Sous le kit, dans le
+> **même message**, collez votre user story telle qu'elle est écrite dans
+> GitHub, **et votre \`module.js\` actuel**. Envoyez. Une conversation par
+> story : pour la story suivante, on recommence.
 
 ---
 

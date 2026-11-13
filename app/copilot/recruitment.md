@@ -1,9 +1,11 @@
 # Kit Copilot — Module Recrutement
 
-> **Mode d'emploi.** Ouvrez une conversation neuve. Joignez ce fichier, ou
-> collez-le en entier, en premier message. Puis collez votre user story telle
-> qu'elle est écrite dans GitHub, **et votre `module.js` actuel**. Une
-> conversation par story : pour la story suivante, on recommence.
+> **Mode d'emploi.** Ouvrez une conversation neuve. Copiez **tout** ce
+> fichier (Cmd+A, Cmd+C) et **collez-le** dans le message — ne le joignez pas
+> avec le trombone, Copilot ignorerait les consignes. Sous le kit, dans le
+> **même message**, collez votre user story telle qu'elle est écrite dans
+> GitHub, **et votre `module.js` actuel**. Envoyez. Une conversation par
+> story : pour la story suivante, on recommence.
 
 ---
 
