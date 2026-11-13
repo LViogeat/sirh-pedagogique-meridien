@@ -100,6 +100,7 @@ sont stables — les références qu'ils stockent restent valables.
 | [`docs/01-architecture.md`](docs/01-architecture.md) | Les décisions et leurs raisons |
 | [`docs/02-deploiement.md`](docs/02-deploiement.md) | Le serveur, les jetons, le DNS, les postes étudiants |
 | [`docs/03-conduite-du-cours.md`](docs/03-conduite-du-cours.md) | **Votre document** : jetons, en-têtes Copilot, le déroulé des sprints, les pannes |
+| [`docs/04-etat-preparation.md`](docs/04-etat-preparation.md) | **Où en est la préparation** : ce qui est vérifié, ce qu'il reste à faire, comment reprendre sur un autre ordinateur |
 | [`app/copilot/`](app/copilot) | Le kit Copilot de chaque groupe, assemblé par `scripts/kit-copilot.sh` |
 | [`scripts/fiches-groupes.sh`](scripts/fiches-groupes.sh) | Imprime les fiches à distribuer, jetons compris |
 | [`scripts/github-setup.sh`](scripts/github-setup.sh) | Branches, protections, invitations, un tableau de sprint par groupe |
