@@ -19,7 +19,7 @@ body:
     id: criteres
     attributes:
       label: Comment je saurai que c'est bon
-      description: Ce que je dois voir à l'écran, avec un chiffre précis.
-      placeholder: "Je vois 27 besoins dans la liste, dont 4 à Annecy."
+      description: Ce que je dois voir ou pouvoir faire sur l'écran.
+      placeholder: "Je vois la liste des postes en sous-effectif de mon hôtel."
     validations:
       required: true
