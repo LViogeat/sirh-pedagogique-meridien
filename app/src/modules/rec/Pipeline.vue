@@ -11,9 +11,18 @@
  *   2. la candidature passe à « embauche » ;
  *   3. l'offre passe à « pourvue ».
  * La clôture d'un besoin est définitive : l'écran demande confirmation.
+ *
+ * Sprint 2 : un clic sur le nom ouvre la page du candidat (#105), le bouton
+ * calendrier planifie un entretien (#106), et la carte affiche l'avis du
+ * dernier compte rendu (#107).
  */
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { cloturerBesoin, sql, update, formatDate, toast } from '@/socle/sdk'
+import PlanifierEntretien from './_PlanifierEntretien.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 const ETAPES = [
   { code: 'nouvelle', label: 'Nouvelle', icone: 'pi pi-inbox' },
@@ -27,7 +36,7 @@ const SUIVANTE = { nouvelle: 'preselection', preselection: 'entretien', entretie
 const libelleEtape = (code) => ETAPES.find((e) => e.code === code)?.label || code
 
 const offres = ref([])
-const offreId = ref(null)
+const offreId = ref(Number(route.query.offre) || null)
 const candidatures = ref([])
 const chargement = ref(true)
 const enCours = ref(null)
@@ -38,7 +47,7 @@ const close = computed(() => offre.value?.statut === 'pourvue')
 async function chargerOffres() {
   try {
     offres.value = await sql(
-      `select o.id, o.intitule, o.statut, o.besoin_id, count(c.id)::int as nb
+      `select o.id, o.intitule, o.statut, o.besoin_id, o.establishment_id, count(c.id)::int as nb
          from offres o left join candidatures c on c.offre_id = o.id
         where o.statut in ('publiee', 'pourvue')
         group by o.id order by o.statut, o.id`,
@@ -60,7 +69,12 @@ async function chargerCandidatures() {
   chargement.value = true
   try {
     candidatures.value = await sql(
-      `select ca.*, c.prenom, c.nom, c.source, c.email
+      `select ca.*, c.prenom, c.nom, c.source, c.email,
+              (select e.avis from entretiens e
+                where e.candidature_id = ca.id and e.avis is not null
+                order by e.date_heure desc limit 1) as dernier_avis,
+              (select min(e.date_heure) from entretiens e
+                where e.candidature_id = ca.id and e.statut = 'planifie') as prochain_entretien
          from candidatures ca join candidats c on c.id = ca.candidat_id
         where ca.offre_id = :offre
         order by ca.maj_le desc, ca.id`,
@@ -125,6 +139,24 @@ async function enregistrerFiche() {
   }
 }
 
+/* ── Planifier un entretien (story #106) ───────────────────────────────── */
+
+const aPlanifier = ref(null)
+
+function planifier(c) {
+  aPlanifier.value = {
+    id: c.id, prenom: c.prenom, nom: c.nom, etape: c.etape,
+    intitule: offre.value.intitule, establishment_id: offre.value.establishment_id,
+  }
+}
+
+const AVIS = {
+  favorable: { label: 'Avis favorable', severite: 'success' },
+  reserve: { label: 'Avis réservé', severite: 'warn' },
+  defavorable: { label: 'Avis défavorable', severite: 'danger' },
+}
+const heure = (v) => `${formatDate(v)} à ${new Date(v).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+
 /* ── Embaucher ──────────────────────────────────────────────────────────── */
 
 const aEmbaucher = ref(null) // candidature en attente de confirmation
@@ -185,8 +217,10 @@ async function embaucher() {
       <p v-if="!parEtape[etape.code].length" class="vide">—</p>
 
       <article v-for="c in parEtape[etape.code]" :key="c.id" class="carte">
-        <div class="nom" @click="ouvrirFiche(c)">{{ c.prenom }} {{ c.nom }}</div>
+        <div class="nom" @click="router.push(`/rec/candidat/${c.candidat_id}`)">{{ c.prenom }} {{ c.nom }}</div>
         <div class="meta">{{ c.source }} · reçue le {{ formatDate(c.recue_le) }}</div>
+        <div v-if="c.prochain_entretien" class="rdv"><i class="pi pi-calendar" /> {{ heure(c.prochain_entretien) }}</div>
+        <Tag v-if="c.dernier_avis" :value="AVIS[c.dernier_avis].label" :severity="AVIS[c.dernier_avis].severite" class="avis" />
         <Rating v-if="c.note" :modelValue="c.note" readonly :stars="5" class="note" />
         <p v-if="c.commentaire" class="commentaire">{{ c.commentaire }}</p>
 
@@ -198,6 +232,8 @@ async function embaucher() {
           <Button v-if="c.etape === 'proposition'" label="Embaucher" icon="pi pi-check"
                   size="small" severity="success" :disabled="enCours !== null"
                   @click="aEmbaucher = c" />
+          <Button icon="pi pi-calendar-plus" size="small" text severity="secondary"
+                  v-tooltip.top="'Planifier un entretien'" @click="planifier(c)" />
           <Button icon="pi pi-pencil" size="small" text severity="secondary"
                   v-tooltip.top="'Noter et commenter'" @click="ouvrirFiche(c)" />
           <Button icon="pi pi-times" size="small" text severity="danger"
@@ -223,6 +259,10 @@ async function embaucher() {
       </div>
     </form>
   </Dialog>
+
+  <PlanifierEntretien :visible="!!aPlanifier" :candidature="aPlanifier"
+                      @update:visible="(v) => { if (!v) aPlanifier = null }"
+                      @planifie="toutRecharger" />
 
   <!-- Confirmation d'embauche -->
   <Dialog :visible="!!aEmbaucher" modal header="Confirmer l'embauche" :style="{ width: '32rem' }"
@@ -259,7 +299,10 @@ async function embaucher() {
 .compte { margin-left: auto; background: var(--p-surface-0); border-radius: 999px; padding: 0 .5rem; font-size: .75rem; }
 .vide { color: var(--p-text-muted-color); text-align: center; font-size: .85rem; }
 .carte { background: var(--p-surface-0); border: 1px solid var(--p-surface-200); border-radius: 8px; padding: .6rem; margin-bottom: .5rem; }
-.nom { font-weight: 600; cursor: pointer; }
+.nom { font-weight: 600; cursor: pointer; color: var(--p-primary-color); }
+.nom:hover { text-decoration: underline; }
+.rdv { font-size: .75rem; margin-top: .3rem; color: var(--p-primary-color); }
+.avis { margin-top: .35rem; font-size: .7rem; }
 .meta { font-size: .75rem; color: var(--p-text-muted-color); margin-top: .15rem; }
 .note { margin-top: .35rem; }
 .note :deep(.p-rating-icon) { width: .8rem; height: .8rem; }
