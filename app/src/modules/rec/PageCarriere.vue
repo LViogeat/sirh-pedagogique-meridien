@@ -13,6 +13,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { getEtablissements, getReferentiels, sql, insert, update, formatDate, toast } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 import { ajouterPiece, verifierFichier, formatTaille } from './_fichiers.js'
 
 const offres = ref([])
@@ -41,7 +42,7 @@ async function charger() {
   }
 }
 
-onMounted(charger)
+onMounted(async () => { await assurerSchema(); await charger() })
 
 const villes = computed(() =>
   [...new Set(offres.value.map((o) => hotels.value[o.establishment_id]?.city).filter(Boolean))].sort())

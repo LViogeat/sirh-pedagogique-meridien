@@ -8,6 +8,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { getBesoins, sql, formatDate, formatNombre, toast } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 import { ETAPES as ETAPES_WORKFLOW, REFUS } from './_workflow.js'
 
 const ETAPES = [...ETAPES_WORKFLOW, REFUS]
@@ -19,6 +20,7 @@ const embauches = ref([])
 const chargement = ref(true)
 
 onMounted(async () => {
+  await assurerSchema()
   try {
     ;[besoins.value, offres.value, parEtape.value, embauches.value] = await Promise.all([
       getBesoins({ typeBesoin: 'recrutement' }),

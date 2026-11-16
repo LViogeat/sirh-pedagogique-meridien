@@ -19,6 +19,7 @@ import {
   prendreEnChargeBesoin, relacherBesoin,
   sql, insert, update, formatDate, toast,
 } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 
 const router = useRouter()
 const offres = ref([])
@@ -56,6 +57,7 @@ async function charger() {
 }
 
 onMounted(async () => {
+  await assurerSchema()
   try {
     ;[etablissements.value, referentiels.value] = await Promise.all([
       getEtablissements(),

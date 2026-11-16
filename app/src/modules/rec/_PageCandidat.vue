@@ -13,6 +13,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getEtablissements, sql, update, remove, formatDate, toast } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 import {
   TYPES_DOCUMENT, libelleType, formatTaille, verifierFichier,
   ajouterPiece, listerPieces, ouvrirPiece, telechargerPiece,
@@ -93,7 +94,7 @@ async function charger() {
   }
 }
 
-onMounted(charger)
+onMounted(async () => { await assurerSchema(); await charger() })
 watch(candidatId, charger)
 
 const modifie = computed(() =>

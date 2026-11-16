@@ -10,6 +10,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { sql, insert, formatDate, toast } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 
 const router = useRouter()
 
@@ -47,7 +48,7 @@ async function charger() {
   }
 }
 
-onMounted(charger)
+onMounted(async () => { await assurerSchema(); await charger() })
 
 let minuterie = null
 watch(recherche, () => {

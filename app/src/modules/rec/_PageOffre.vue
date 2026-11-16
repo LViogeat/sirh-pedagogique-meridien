@@ -14,6 +14,7 @@ import {
   getEtablissements, getPoste, getSalaries, getReferentiels, relacherBesoin,
   sql, update, formatDate, formatNombre, toast,
 } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 import { localisationDe } from './_localisation.js'
 import KanbanCandidatures from './_KanbanCandidatures.vue'
 
@@ -66,7 +67,7 @@ async function charger() {
   }
 }
 
-onMounted(charger)
+onMounted(async () => { await assurerSchema(); await charger() })
 watch(offreId, () => { edition.value = null; charger() })
 
 const localisation = computed(() => localisationDe(hotel.value))

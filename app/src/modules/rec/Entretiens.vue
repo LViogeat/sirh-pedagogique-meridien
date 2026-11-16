@@ -10,6 +10,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { sql, update, formatDate, toast } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 import PlanifierEntretien from './_PlanifierEntretien.vue'
 
 const router = useRouter()
@@ -54,7 +55,7 @@ async function charger() {
   }
 }
 
-onMounted(charger)
+onMounted(async () => { await assurerSchema(); await charger() })
 
 const recruteurs = computed(() =>
   [...new Map(entretiens.value.map((e) => [e.recruteur_id, { id: e.recruteur_id, nom: e.recruteur_nom }])).values()]

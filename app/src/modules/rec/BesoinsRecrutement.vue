@@ -15,6 +15,7 @@ import {
   prendreEnChargeBesoin, relacherBesoin,
   sql, insert, formatDate, toast,
 } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 
 const besoins = ref([])
 const offres = ref([])
@@ -57,6 +58,7 @@ async function charger() {
 }
 
 onMounted(async () => {
+  await assurerSchema()
   try {
     ;[etablissements.value, referentiels.value] = await Promise.all([
       getEtablissements(),

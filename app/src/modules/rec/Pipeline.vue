@@ -12,6 +12,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getEtablissements, sql, formatDate, toast } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 import { ETAPES, REFUS } from './_workflow.js'
 
 const route = useRoute()
@@ -31,6 +32,7 @@ const STATUTS = [
 ]
 
 onMounted(async () => {
+  await assurerSchema()
   try {
     const [lignes, etabs] = await Promise.all([
       sql(

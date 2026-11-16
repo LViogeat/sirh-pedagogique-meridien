@@ -14,6 +14,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPoste, sql, update, formatDate, toast } from '@/socle/sdk'
+import { assurerSchema } from './_schema.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,7 +96,7 @@ async function charger() {
   }
 }
 
-onMounted(charger)
+onMounted(async () => { await assurerSchema(); await charger() })
 watch(entretienId, charger)
 
 const evaluees = computed(() => grille.value.filter((g) => g.niveau_constate))

@@ -210,3 +210,14 @@ alter table offres add constraint offres_details_check check (
   and (salaire_min_k is null or salaire_max_k is null or salaire_min_k <= salaire_max_k)
   and nb_postes >= 1
 );
+
+
+-- =============================================================================
+-- Version du schéma appliquée automatiquement par le module (_schema.js)
+-- =============================================================================
+
+create table if not exists schema_version (
+  id           integer   primary key,
+  empreinte    text      not null,
+  applique_le  timestamp not null
+);
