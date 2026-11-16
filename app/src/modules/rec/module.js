@@ -13,5 +13,11 @@ export default {
       masque: true,
       component: () => import('./_PageCandidat.vue'),
     },
+    {
+      path: 'entretien/:id',
+      label: "Compte rendu d'entretien",
+      masque: true,
+      component: () => import('./_CompteRendu.vue'),
+    },
   ],
 }
