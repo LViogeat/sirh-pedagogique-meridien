@@ -7,11 +7,16 @@
  * complète (intitulé, type de contrat, description), on la publie, ou on
  * l'annule. Annuler une offre relâche son besoin dans le socle : il redevient
  * disponible et pourra être repris.
+ *
+ * « Nouvelle offre » (story #104) crée une offre de toutes pièces, sur n'importe
+ * quel poste : la description est pré-remplie avec les compétences attendues
+ * du poste, et le rattachement à un besoin ouvert est facultatif.
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import {
-  getEtablissements, getReferentiels, relacherBesoin,
-  sql, update, formatDate, toast,
+  getEtablissements, getReferentiels, getPostes, getPoste, getBesoins,
+  prendreEnChargeBesoin, relacherBesoin,
+  sql, insert, update, formatDate, toast,
 } from '@/socle/sdk'
 
 const offres = ref([])
@@ -109,6 +114,110 @@ async function enregistrer() {
   }
 }
 
+/* ── Nouvelle offre (story #104) ───────────────────────────────────────── */
+
+const creation = ref(null)
+const postesHotel = ref([])
+const posteDetail = ref(null)
+const besoinsPoste = ref([])
+
+const hotelCourt = (nom) => (nom || '').replace(/^Sorbonne-Hôtel\s+/, '')
+const NIVEAUX = { 1: 'notions', 2: 'opérationnel', 3: 'confirmé', 4: 'expert' }
+
+function ouvrirCreation() {
+  creation.value = {
+    etablissementId: null, posteId: null, typeContrat: 'CDI',
+    intitule: '', description: '', besoinId: null,
+  }
+  postesHotel.value = []
+  posteDetail.value = null
+  besoinsPoste.value = []
+}
+
+watch(() => creation.value?.etablissementId, async (id) => {
+  if (!creation.value) return
+  creation.value.posteId = null
+  posteDetail.value = null
+  besoinsPoste.value = []
+  postesHotel.value = []
+  if (!id) return
+  try {
+    postesHotel.value = (await getPostes({ etablissementId: id }))
+      .sort((a, b) => a.title.localeCompare(b.title))
+  } catch (erreur) {
+    toast.erreur(erreur.message)
+  }
+})
+
+watch(() => creation.value?.posteId, async (id) => {
+  if (!creation.value) return
+  posteDetail.value = null
+  besoinsPoste.value = []
+  creation.value.besoinId = null
+  if (!id) return
+  try {
+    const [poste, besoins] = await Promise.all([
+      getPoste(id),
+      getBesoins({ typeBesoin: 'recrutement', statut: 'ouvert', posteId: id }),
+    ])
+    posteDetail.value = poste
+    besoinsPoste.value = besoins
+    creation.value.intitule = `${poste.title} — ${hotelCourt(poste.establishment_name)}`
+    creation.value.description = descriptionDe(poste)
+  } catch (erreur) {
+    toast.erreur(erreur.message)
+  }
+})
+
+function descriptionDe(poste) {
+  const lignes = [
+    `${poste.establishment_name} (${poste.establishment_city}) recrute un(e) ${poste.title} ` +
+    `pour son département ${poste.department_label}.`,
+  ]
+  if (poste.required_skills?.length) {
+    lignes.push('', 'Compétences attendues :')
+    for (const c of poste.required_skills) {
+      lignes.push(`- ${c.skill_label} : niveau ${c.required_level} sur 4 (${NIVEAUX[c.required_level]})`)
+    }
+  }
+  lignes.push('', 'Missions, horaires et rémunération : à compléter.')
+  return lignes.join('\n')
+}
+
+const libelleBesoin = (b) => `n° ${b.id} · priorité ${b.priority_label.toLowerCase()} · ${b.origin}`
+
+async function creer() {
+  const c = creation.value
+  if (!c.posteId || !c.intitule.trim()) {
+    toast.alerte("Choisissez un hôtel et un poste, et vérifiez l'intitulé.")
+    return
+  }
+  enregistrement.value = true
+  let besoinPris = false
+  try {
+    if (c.besoinId) {
+      await prendreEnChargeBesoin(c.besoinId, 'Offre créée depuis « Nouvelle offre »')
+      besoinPris = true
+    }
+    const offre = await insert('offres', {
+      besoin_id: c.besoinId || null,
+      position_id: c.posteId,
+      establishment_id: c.etablissementId,
+      intitule: c.intitule.trim(),
+      type_contrat: c.typeContrat,
+      description: c.description.trim() || null,
+    })
+    toast.succes(`Offre n° ${offre.id} créée en brouillon : ${offre.intitule}`)
+    creation.value = null
+    await charger()
+  } catch (erreur) {
+    if (besoinPris) await relacherBesoin(c.besoinId).catch(() => {})
+    toast.erreur(erreur.message)
+  } finally {
+    enregistrement.value = false
+  }
+}
+
 /* ── Changer le statut ──────────────────────────────────────────────────── */
 
 const enCours = ref(null)
@@ -162,13 +271,15 @@ async function annuler(offre) {
     <Select v-model="statut" :options="STATUTS"
             optionLabel="label" optionValue="code"
             placeholder="Tous les statuts" showClear />
+    <Button label="Nouvelle offre" icon="pi pi-plus" class="nouvelle" @click="ouvrirCreation" />
   </div>
 
   <DataTable :value="offres" :loading="chargement" dataKey="id"
              paginator :rows="20" removableSort stripedRows size="small" rowHover
              @row-click="(e) => ouvrir(e.data)">
     <template #empty>
-      Aucune offre. Une offre se crée en prenant en charge un besoin dans l'écran « Besoins à traiter ».
+      Aucune offre. Créez-en une avec « Nouvelle offre », ou en prenant en charge un besoin
+      dans l'écran « Besoins à traiter ».
     </template>
 
     <Column field="id" header="N°" sortable style="width: 4rem" />
@@ -236,6 +347,57 @@ async function annuler(offre) {
       </div>
     </form>
   </Dialog>
+  <!-- Nouvelle offre (story #104) -->
+  <Dialog :visible="!!creation" modal header="Nouvelle offre d'emploi" :style="{ width: '44rem' }"
+          @update:visible="creation = null">
+    <form v-if="creation" class="formulaire" @submit.prevent="creer">
+      <div class="deux">
+        <div>
+          <label for="hotel">Hôtel</label>
+          <Select inputId="hotel" v-model="creation.etablissementId" :options="etablissements"
+                  optionLabel="name" optionValue="id" placeholder="Choisir un hôtel" fluid />
+        </div>
+        <div>
+          <label for="poste">Poste</label>
+          <Select inputId="poste" v-model="creation.posteId" :options="postesHotel"
+                  optionLabel="title" optionValue="id" filter
+                  :placeholder="creation.etablissementId ? 'Choisir un poste' : 'Choisir d’abord un hôtel'"
+                  :disabled="!creation.etablissementId" fluid />
+        </div>
+      </div>
+
+      <p v-if="posteDetail" class="aide">
+        Département {{ posteDetail.department_label }} · effectif {{ posteDetail.current_headcount }}
+        sur {{ posteDetail.target_headcount }} · {{ posteDetail.required_skills.length }} compétence(s) attendue(s)
+      </p>
+
+      <div class="deux">
+        <div>
+          <label for="nouveau-contrat">Type de contrat</label>
+          <Select inputId="nouveau-contrat" v-model="creation.typeContrat"
+                  :options="referentiels.type_contrat" optionLabel="label" optionValue="code" fluid />
+        </div>
+        <div>
+          <label for="besoin">Besoin rattaché (facultatif)</label>
+          <Select inputId="besoin" v-model="creation.besoinId" :options="besoinsPoste"
+                  :optionLabel="libelleBesoin" optionValue="id" showClear fluid
+                  :placeholder="besoinsPoste.length ? 'Aucun' : 'Aucun besoin ouvert sur ce poste'"
+                  :disabled="!besoinsPoste.length" />
+        </div>
+      </div>
+
+      <label for="nouvel-intitule">Intitulé</label>
+      <InputText id="nouvel-intitule" v-model="creation.intitule" />
+
+      <label for="nouvelle-description">Description du poste</label>
+      <Textarea id="nouvelle-description" v-model="creation.description" rows="9" autoResize />
+
+      <div class="pied">
+        <Button label="Fermer" severity="secondary" text type="button" @click="creation = null" />
+        <Button label="Créer l'offre" icon="pi pi-check" type="submit" :loading="enregistrement" />
+      </div>
+    </form>
+  </Dialog>
 </template>
 
 <style scoped>
@@ -244,6 +406,10 @@ async function annuler(offre) {
 .filtres > * { min-width: 13rem; }
 .ville { display: block; font-size: .8rem; color: var(--p-text-muted-color); }
 .actions { display: flex; gap: .25rem; }
+.nouvelle { margin-left: auto; }
+.deux { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.deux label { display: block; margin-bottom: .3rem; }
+.aide { font-size: .85rem; color: var(--p-text-muted-color); margin: .4rem 0 0; }
 .formulaire { display: flex; flex-direction: column; gap: .4rem; }
 .formulaire label { font-size: .85rem; font-weight: 600; margin-top: .6rem; }
 .pied { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.25rem; }
