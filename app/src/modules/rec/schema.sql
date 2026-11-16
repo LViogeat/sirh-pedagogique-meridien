@@ -54,3 +54,52 @@ create table if not exists candidatures (
   maj_le       date    not null default current_date,
   unique (offre_id, candidat_id)                       -- pas de doublon
 );
+
+
+-- =============================================================================
+-- Sprint 2 — entretiens, évaluation des compétences, pièces jointes
+-- =============================================================================
+
+-- Le consentement RGPD donné par le candidat (page carrière).
+alter table candidats add column if not exists consentement_le date;
+
+-- Un entretien de recrutement, rattaché à une candidature.
+create table if not exists entretiens (
+  id              serial    primary key,
+  candidature_id  integer   not null references candidatures(id) on delete cascade,
+  date_heure      timestamp not null,
+  lieu            text,                              -- salle, adresse ou lien visio
+  recruteur_id    integer,                           -- public.employees
+  recruteur_nom   text,                              -- recopié pour l'affichage
+  statut          text      not null default 'planifie'
+                  check (statut in ('planifie', 'realise', 'annule')),
+  compte_rendu    text,
+  avis            text      check (avis in ('favorable', 'reserve', 'defavorable')),
+  recommandation  text      check (recommandation in ('proposition', 'second_entretien', 'refus')),
+  cree_le         date      not null default current_date
+);
+
+-- Le niveau constaté en entretien, compétence par compétence du poste.
+create table if not exists evaluations_competences (
+  id               serial  primary key,
+  entretien_id     integer not null references entretiens(id) on delete cascade,
+  skill_id         integer not null,                 -- public.skills
+  competence       text    not null,                 -- libellé recopié
+  niveau_attendu   integer check (niveau_attendu between 1 and 4),
+  niveau_constate  integer check (niveau_constate between 1 and 4),
+  commentaire      text,
+  unique (entretien_id, skill_id)
+);
+
+-- Les documents d'un candidat (CV, lettre…), stockés en base64.
+create table if not exists pieces_jointes (
+  id             serial  primary key,
+  candidat_id    integer not null references candidats(id) on delete cascade,
+  type_document  text    not null default 'cv'
+                 check (type_document in ('cv', 'lettre', 'autre')),
+  nom_fichier    text    not null,
+  type_mime      text    not null,
+  taille         integer not null,                   -- en octets, 500 Ko maximum
+  contenu        text    not null,                   -- le fichier, encodé en base64
+  ajoutee_le     date    not null default current_date
+);
