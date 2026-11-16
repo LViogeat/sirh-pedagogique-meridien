@@ -6,12 +6,16 @@
 #   ssh <serveur> 'bash -s' < scripts/fiches-groupes.sh
 #   ou, depuis /opt/sirh : bash scripts/fiches-groupes.sh
 #
+# Une seule fiche (par exemple pour un groupe qui change de module) :
+#   ssh <serveur> 'bash -s' -- /opt/sirh/.env portail < scripts/fiches-groupes.sh
+#
 # Les jetons ne sont écrits nulle part dans le dépôt : ce script les lit dans
 # /opt/sirh/.env, qui n'est pas versionné.
 
 set -euo pipefail
 
 ENV_FILE="${1:-/opt/sirh/.env}"
+SEUL="${2:-}"   # code d'un module : n'imprime que sa fiche
 DEPOT="LViogeat/sirh-pedagogique-meridien"
 
 # Le code du module → la branche du groupe. Un groupe sans branche n'a pas de
@@ -37,6 +41,7 @@ API=${API:-https://sirh-api.govetia.com}
 # « code:Libellé:jeton[:type_besoin] », séparés par des virgules.
 echo "$GROUPES" | tr ',' '\n' | while IFS=: read -r code libelle jeton besoin; do
   [ -n "$code" ] || continue
+  [ -z "$SEUL" ] || [ "$code" = "$SEUL" ] || continue
   branche=$(branche_de "$code")
   [ -n "$branche" ] || continue
   cat <<FICHE
@@ -62,8 +67,8 @@ echo "$GROUPES" | tr ',' '\n' | while IFS=: read -r code libelle jeton besoin; d
 
   5. Pour coder une story avec Copilot : ouvrez app/copilot/$branche.md,
      copiez TOUT, collez-le dans Copilot (pas de trombone), puis collez la
-     story et votre module.js dessous, dans le même message. Collez le
-     .vue rendu AVANT le module.js.
+     story dessous, dans le même message. Copilot rend un seul fichier
+     .vue : posez-le dans app/src/modules/$code/, il apparaît dans le menu.
 
   Votre branche : $branche
   Créer une story : https://github.com/$DEPOT/issues/new?template=story-$branche.yml
