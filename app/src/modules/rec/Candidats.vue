@@ -8,7 +8,10 @@
  *   « nouvelle ». La table interdit les doublons (un candidat, une offre).
  */
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { sql, insert, formatDate, toast } from '@/socle/sdk'
+
+const router = useRouter()
 
 const SOURCES = ['Spontanée', 'Indeed', 'LinkedIn', 'France Travail', 'Site carrière', 'Cooptation', 'École / alternance']
 
@@ -140,7 +143,9 @@ async function positionner() {
 
     <Column header="Candidat" sortField="nom" sortable>
       <template #body="{ data }">
-        <strong>{{ data.prenom }} {{ data.nom }}</strong>
+        <a href="#" class="nom" @click.prevent="router.push(`/rec/candidat/${data.id}`)">
+          {{ data.prenom }} {{ data.nom }}
+        </a>
         <span class="detail">{{ [data.email, data.telephone].filter(Boolean).join(' · ') || '—' }}</span>
       </template>
     </Column>
@@ -215,6 +220,8 @@ async function positionner() {
 <style scoped>
 .barre { display: flex; justify-content: space-between; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .barre :deep(input) { min-width: 18rem; }
+.nom { font-weight: 600; color: var(--p-primary-color); text-decoration: none; }
+.nom:hover { text-decoration: underline; }
 .detail { display: block; font-size: .8rem; color: var(--p-text-muted-color); }
 .muet { color: var(--p-text-muted-color); }
 .formulaire { display: flex; flex-direction: column; gap: .4rem; }

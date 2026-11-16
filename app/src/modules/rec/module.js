@@ -1,7 +1,17 @@
-// Manifeste du module « rec » : la liste de vos écrans.
-// Il est déjà prêt. Chaque nouvel écran ajoute UNE entrée dans « routes » :
-// c'est Copilot qui vous rend ce fichier complet, vous le collez tel quel.
+// Manifeste du module « rec ».
+//
+// Les écrans du menu n'ont pas besoin d'y figurer : tout fichier .vue posé
+// dans ce dossier devient un écran. On ne déclare ici que les pages de DÉTAIL,
+// qui reçoivent un identifiant dans leur adresse et restent hors du menu
+// (masque: true) : on y arrive par un clic.
 export default {
   code: 'rec',
-  routes: [],
+  routes: [
+    {
+      path: 'candidat/:id',
+      label: 'Page candidat',
+      masque: true,
+      component: () => import('./_PageCandidat.vue'),
+    },
+  ],
 }
