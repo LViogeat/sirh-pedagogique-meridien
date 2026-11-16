@@ -105,3 +105,21 @@ create table if not exists affectations_profil (
 
 create index if not exists affectations_profil_salarie
   on affectations_profil (employee_id, date_debut desc);
+
+-- ── Pointages (#133, #134, #135) ─────────────────────────────────────────────
+
+-- Un pointage : un passage à la pointeuse, horodaté par le poste du salarié.
+-- Le sens alterne : entrée, sortie, entrée, sortie… La première entrée du jour
+-- est l'arrivée, la dernière sortie le départ, et ce qui est entre les deux
+-- sont les pauses.
+create table if not exists pointages (
+  id          serial  primary key,
+  employee_id integer not null,                 -- référence LOGIQUE au socle
+  jour        date    not null,
+  heure       time    not null,
+  sens        text    not null check (sens in ('entree', 'sortie')),
+  lieu        text    not null default 'site' check (lieu in ('site', 'teletravail')),
+  cree_le     timestamptz not null default now()
+);
+
+create index if not exists pointages_salarie_jour on pointages (employee_id, jour, heure);
