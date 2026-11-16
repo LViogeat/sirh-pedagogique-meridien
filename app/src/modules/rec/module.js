@@ -19,5 +19,11 @@ export default {
       masque: true,
       component: () => import('./_CompteRendu.vue'),
     },
+    {
+      path: 'offre/:id',
+      label: 'Page DP',
+      masque: true,
+      component: () => import('./_PageOffre.vue'),
+    },
   ],
 }

@@ -11,7 +11,7 @@
 import { ref, computed } from 'vue'
 import { toast } from '@/socle/sdk'
 import {
-  suivante, precedente, libelleEtape, MOTIFS_REFUS,
+  suivante, precedente, libelleEtape, etapeDe, MOTIFS_REFUS,
   avancer, reculer, refuser, reactiver, embaucher,
 } from './_workflow.js'
 import PlanifierEntretien from './_PlanifierEntretien.vue'
@@ -129,7 +129,8 @@ const libelleSuivante = computed(() =>
       <Button v-if="versSuivante" size="small" iconPos="right"
               :icon="versSuivante === 'embauche' ? 'pi pi-check' : versSuivante === 'entretien' ? 'pi pi-calendar-plus' : 'pi pi-arrow-right'"
               :severity="versSuivante === 'embauche' ? 'success' : null"
-              :label="compact ? (versSuivante === 'embauche' ? 'Embaucher' : libelleEtape(versSuivante)) : libelleSuivante"
+              :label="compact ? (versSuivante === 'embauche' ? 'Embaucher' : etapeDe(versSuivante).court) : libelleSuivante"
+              v-tooltip.top="compact && versSuivante !== 'embauche' ? `Passer à : ${libelleEtape(versSuivante)}` : null"
               :loading="enCours" @click="clicSuivante" />
 
       <Button v-if="c.etape === 'entretien'" size="small" text severity="secondary" icon="pi pi-calendar-plus"
@@ -142,7 +143,8 @@ const libelleSuivante = computed(() =>
               :disabled="enCours" @click="refus = { motif: null, commentaire: commentaire }" />
 
       <Button v-if="c.etape === 'refus'" size="small" outlined icon="pi pi-replay"
-              :label="`Réactiver (${libelleEtape(c.etape_avant_refus || 'nouvelle')})`"
+              :label="compact ? 'Réactiver' : `Réactiver (${libelleEtape(c.etape_avant_refus || 'nouvelle')})`"
+              v-tooltip.top="compact ? `Réactiver à : ${libelleEtape(c.etape_avant_refus || 'nouvelle')}` : null"
               :loading="enCours" @click="clicReactiver" />
     </div>
 
@@ -203,7 +205,9 @@ const libelleSuivante = computed(() =>
 .workflow-actions { display: flex; flex-direction: column; gap: .5rem; }
 .commentaire { max-width: 32rem; }
 .boutons { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
-.compact .boutons { gap: .15rem; }
+.compact .boutons { gap: .1rem; }
+.compact :deep(.p-button) { padding: .3rem .45rem; font-size: .75rem; }
+.compact :deep(.p-button-icon-only) { width: 1.9rem; }
 .formulaire { display: flex; flex-direction: column; gap: .35rem; }
 .formulaire label { font-size: .85rem; font-weight: 600; margin-top: .6rem; }
 .aide { font-size: .85rem; color: var(--p-text-muted-color); margin: 0; }

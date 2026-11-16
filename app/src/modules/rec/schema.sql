@@ -186,3 +186,27 @@ insert into entretien_competences
 select entretien_id, 'poste', skill_id, competence, coalesce(niveau_attendu, 2), niveau_constate, commentaire
   from evaluations_competences
 on conflict (entretien_id, source, competence_id) do nothing;
+
+
+-- =============================================================================
+-- Page DP : détails du poste (story #147)
+-- =============================================================================
+
+alter table offres add column if not exists recruteur_id     integer;      -- public.employees (Chargé RH)
+alter table offres add column if not exists recruteur_nom    text;
+alter table offres add column if not exists manager_id       integer;      -- public.employees
+alter table offres add column if not exists manager_nom      text;
+alter table offres add column if not exists temps_travail    text not null default 'temps_plein';
+alter table offres add column if not exists quotite          integer;      -- en pourcentage, si temps partiel
+alter table offres add column if not exists salaire_min_k    numeric(5,1); -- k€ brut annuel
+alter table offres add column if not exists salaire_max_k    numeric(5,1);
+alter table offres add column if not exists date_prise_poste date;
+alter table offres add column if not exists nb_postes        integer not null default 1;
+
+alter table offres drop constraint if exists offres_details_check;
+alter table offres add constraint offres_details_check check (
+  temps_travail in ('temps_plein', 'temps_partiel')
+  and (temps_travail = 'temps_plein' or quotite between 10 and 99)
+  and (salaire_min_k is null or salaire_max_k is null or salaire_min_k <= salaire_max_k)
+  and nb_postes >= 1
+);

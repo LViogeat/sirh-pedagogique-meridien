@@ -279,7 +279,7 @@ const dateHeure = (v) =>
             <header class="dp-entete">
               <div>
                 <a href="#" class="lien titre-dp"
-                   @click.prevent="router.push({ path: '/rec/pipeline', query: { offre: ca.offre_id } })">
+                   @click.prevent="router.push(`/rec/offre/${ca.offre_id}`)">
                   {{ ca.intitule }}
                 </a>
                 <span class="detail">

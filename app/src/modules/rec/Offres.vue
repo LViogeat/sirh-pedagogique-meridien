@@ -3,9 +3,9 @@
 /**
  * Les offres d'emploi du module (story #5).
  *
- * Une offre naît en brouillon depuis l'écran « Besoins à traiter ». Ici on la
- * complète (intitulé, type de contrat, description), on la publie, ou on
- * l'annule. Annuler une offre relâche son besoin dans le socle : il redevient
+ * Une offre naît en brouillon depuis l'écran « Besoins à traiter », ou avec
+ * « Nouvelle offre ». Un clic sur une offre ouvre sa page DP (story #147), où
+ * l'on complète tous ses détails. Ici, on peut aussi la publier ou l'annuler. Annuler une offre relâche son besoin dans le socle : il redevient
  * disponible et pourra être repris.
  *
  * « Nouvelle offre » (story #104) crée une offre de toutes pièces, sur n'importe
@@ -13,12 +13,14 @@
  * du poste, et le rattachement à un besoin ouvert est facultatif.
  */
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   getEtablissements, getReferentiels, getPostes, getPoste, getBesoins,
   prendreEnChargeBesoin, relacherBesoin,
   sql, insert, update, formatDate, toast,
 } from '@/socle/sdk'
 
+const router = useRouter()
 const offres = ref([])
 const etablissements = ref([])
 const referentiels = ref({})
@@ -77,42 +79,7 @@ const compteurs = computed(() => ({
   pourvues: offres.value.filter((o) => o.statut === 'pourvue').length,
 }))
 
-/* ── Modifier une offre ─────────────────────────────────────────────────── */
-
-const edition = ref(null)      // copie de l'offre en cours de modification
 const enregistrement = ref(false)
-
-function ouvrir(offre) {
-  edition.value = {
-    id: offre.id,
-    intitule: offre.intitule,
-    type_contrat: offre.type_contrat,
-    description: offre.description || '',
-    statut: offre.statut,
-  }
-}
-
-async function enregistrer() {
-  if (!edition.value.intitule?.trim()) {
-    toast.alerte("L'intitulé est obligatoire.")
-    return
-  }
-  enregistrement.value = true
-  try {
-    await update('offres', edition.value.id, {
-      intitule: edition.value.intitule.trim(),
-      type_contrat: edition.value.type_contrat,
-      description: edition.value.description.trim() || null,
-    })
-    toast.succes(`Offre n° ${edition.value.id} enregistrée`)
-    edition.value = null
-    await charger()
-  } catch (erreur) {
-    toast.erreur(erreur.message)
-  } finally {
-    enregistrement.value = false
-  }
-}
 
 /* ── Nouvelle offre (story #104) ───────────────────────────────────────── */
 
@@ -209,7 +176,7 @@ async function creer() {
     })
     toast.succes(`Offre n° ${offre.id} créée en brouillon : ${offre.intitule}`)
     creation.value = null
-    await charger()
+    router.push(`/rec/offre/${offre.id}`)
   } catch (erreur) {
     if (besoinPris) await relacherBesoin(c.besoinId).catch(() => {})
     toast.erreur(erreur.message)
@@ -276,14 +243,16 @@ async function annuler(offre) {
 
   <DataTable :value="offres" :loading="chargement" dataKey="id"
              paginator :rows="20" removableSort stripedRows size="small" rowHover
-             @row-click="(e) => ouvrir(e.data)">
+             @row-click="(e) => router.push(`/rec/offre/${e.data.id}`)">
     <template #empty>
       Aucune offre. Créez-en une avec « Nouvelle offre », ou en prenant en charge un besoin
       dans l'écran « Besoins à traiter ».
     </template>
 
     <Column field="id" header="N°" sortable style="width: 4rem" />
-    <Column field="intitule" header="Intitulé" sortable />
+    <Column field="intitule" header="Intitulé" sortable>
+      <template #body="{ data }"><span class="lien">{{ data.intitule }}</span></template>
+    </Column>
 
     <Column header="Établissement">
       <template #body="{ data }">
@@ -326,27 +295,6 @@ async function annuler(offre) {
     </Column>
   </DataTable>
 
-  <Dialog :visible="!!edition" modal :style="{ width: '36rem' }"
-          :header="edition ? `Offre n° ${edition.id}` : ''"
-          @update:visible="edition = null">
-    <form v-if="edition" class="formulaire" @submit.prevent="enregistrer">
-      <label for="intitule">Intitulé</label>
-      <InputText id="intitule" v-model="edition.intitule" />
-
-      <label for="contrat">Type de contrat</label>
-      <Select inputId="contrat" v-model="edition.type_contrat"
-              :options="referentiels.type_contrat" optionLabel="label" optionValue="code" />
-
-      <label for="description">Description du poste</label>
-      <Textarea id="description" v-model="edition.description" rows="6" autoResize
-                placeholder="Missions, profil recherché, horaires, rémunération…" />
-
-      <div class="pied">
-        <Button label="Fermer" severity="secondary" text type="button" @click="edition = null" />
-        <Button label="Enregistrer" icon="pi pi-check" type="submit" :loading="enregistrement" />
-      </div>
-    </form>
-  </Dialog>
   <!-- Nouvelle offre (story #104) -->
   <Dialog :visible="!!creation" modal header="Nouvelle offre d'emploi" :style="{ width: '44rem' }"
           @update:visible="creation = null">
@@ -407,6 +355,7 @@ async function annuler(offre) {
 .ville { display: block; font-size: .8rem; color: var(--p-text-muted-color); }
 .actions { display: flex; gap: .25rem; }
 .nouvelle { margin-left: auto; }
+.lien { color: var(--p-primary-color); font-weight: 500; }
 .deux { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 .deux label { display: block; margin-bottom: .3rem; }
 .aide { font-size: .85rem; color: var(--p-text-muted-color); margin: .4rem 0 0; }
