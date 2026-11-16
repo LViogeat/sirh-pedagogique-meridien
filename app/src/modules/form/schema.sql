@@ -169,3 +169,72 @@ from (values
         establishment_id, salle, formateur, places)
 join formations f on f.code = v.code
 where not exists (select 1 from sessions);
+
+-- =============================================================================
+-- SPRINT 2
+--
+-- Tout ce qui suit s'ajoute aux tables du sprint 1 sans rien effacer :
+-- « add column if not exists » et « create table if not exists » ne font rien
+-- si la colonne ou la table est déjà là.
+-- =============================================================================
+
+-- La réalisation validée par le RH après vérification de l'émargement (#64).
+-- Vide tant que le RH ne s'est pas prononcé.
+alter table inscriptions add column if not exists realisation text
+  check (realisation is null or realisation in ('validee', 'non_validee'));
+alter table inscriptions add column if not exists realisation_le date;
+
+-- Le coût de la session en euros, pour le suivi du budget (#48)
+alter table sessions add column if not exists cout integer not null default 0
+  check (cout >= 0);
+
+-- Les souhaits de formation (stories #27, #24 et #28).
+-- Le collaborateur les exprime, le manager les formalise et les transmet au RH.
+create table if not exists souhaits (
+  id                  serial primary key,
+  employee_id         integer not null,
+  formation_id        integer not null references formations(id),
+  origine             text not null default 'entretien_annuel'
+                      check (origine in ('entretien_annuel', 'en_cours_annee')),
+  review_id           integer,
+  saisi_par           text not null default 'collaborateur'
+                      check (saisi_par in ('collaborateur', 'manager')),
+  motivation          text,
+  priorite            text check (priorite is null
+                                  or priorite in ('haute', 'moyenne', 'basse')),
+  avis_manager        text check (avis_manager is null
+                                  or avis_manager in ('favorable', 'reserve')),
+  commentaire_manager text,
+  statut              text not null default 'exprime'
+                      check (statut in ('exprime', 'transmis', 'ecarte')),
+  transmis_le         date,
+  cree_le             timestamp not null default now(),
+  unique (employee_id, formation_id, origine)
+);
+
+-- Le budget formation alloué à un établissement pour une année (#48)
+create table if not exists budgets (
+  id               serial primary key,
+  establishment_id integer not null,
+  annee            integer not null,
+  montant          integer not null check (montant >= 0),
+  unique (establishment_id, annee)
+);
+
+-- Un coût de départ pour les sessions qui n'en ont pas encore : 150 euros de
+-- l'heure. Fait une seule fois, tant qu'aucun budget n'a été saisi.
+update sessions s
+set    cout = f.duree_heures * 150
+from   formations f
+where  f.id = s.formation_id
+and    s.cout = 0
+and    not exists (select 1 from budgets);
+
+-- Des budgets d'exemple pour 2026 et 2027. Insérés seulement si la table est vide.
+insert into budgets (establishment_id, annee, montant)
+select v.establishment_id, v.annee, v.montant
+from (values
+  (1, 2026, 30000), (2, 2026, 18000), (3, 2026, 16000), (4, 2026, 24000), (5, 2026, 14000),
+  (1, 2027, 32000), (2, 2027, 19000), (3, 2027, 17000), (4, 2027, 25000), (5, 2027, 15000)
+) as v (establishment_id, annee, montant)
+where not exists (select 1 from budgets);

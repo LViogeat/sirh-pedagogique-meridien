@@ -6,8 +6,8 @@
  *
  * On choisit une session : la liste des participants inscrits s'affiche, et
  * on coche pour chacun Présent, Absent ou Absent justifié. Chaque choix est
- * enregistré tout de suite. Une présence compte ensuite comme « formation
- * réalisée » sur l'écran des formations obligatoires.
+ * enregistré tout de suite. Le RH valide ensuite la réalisation à partir de
+ * cette feuille (écran « Validation des réalisations »).
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { sql, update, getSalaries, formatDate, toast } from '@/socle/sdk'
@@ -103,9 +103,13 @@ const compte = computed(() => ({
 async function noter(participant, presence) {
   const ligne = lignes.value.find((p) => p.id === participant.id)
   const avant = ligne.presence
+  if (presence === avant) return
   ligne.presence = presence          // on affiche tout de suite…
   try {
-    await update('inscriptions', participant.id, { presence })
+    // Si la présence change, la validation déjà donnée par le RH ne vaut plus.
+    await update('inscriptions', participant.id, {
+      presence, realisation: null, realisation_le: null,
+    })
   } catch (erreur) {
     ligne.presence = avant           // …et on revient en arrière si ça échoue
     toast.erreur(erreur.message)

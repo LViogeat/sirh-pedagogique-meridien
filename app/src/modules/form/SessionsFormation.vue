@@ -4,6 +4,7 @@
  * Story #38 — Le Responsable RH d'établissement crée les sessions de
  * formation : dates, heures de début et de fin, site, salle, formateur et
  * nombre de places. Une session créée est ouverte aux inscriptions.
+ * Le coût de la session sert au suivi du budget (story #48).
  *
  * L'écran liste aussi les sessions existantes, permet de les modifier, de
  * fermer les inscriptions ou d'annuler une session.
@@ -82,6 +83,7 @@ function nouvelle() {
     salle: '',
     formateur: '',
     places: 10,
+    cout: 0,
     statut: 'ouverte',
     inscrits: 0,
   }
@@ -99,6 +101,7 @@ function modifier(session) {
     salle: session.salle ?? '',
     formateur: session.formateur ?? '',
     places: session.places,
+    cout: Number(session.cout ?? 0),
     statut: session.statut,
     inscrits: session.inscrits,
   }
@@ -139,6 +142,7 @@ async function enregistrer() {
     salle: f.salle.trim(),
     formateur: f.formateur.trim(),
     places: f.places,
+    cout: Math.max(0, Math.round(Number(f.cout ?? 0))),
     statut: f.statut,
   }
 
@@ -310,7 +314,12 @@ function voirInscriptions(session) {
         <InputNumber inputId="s-places" v-model="fiche.places" :min="1" :max="200" showButtons />
       </div>
 
-      <div v-if="fiche.id" class="champ large">
+      <div class="champ">
+        <label for="s-cout">Coût de la session (€)</label>
+        <InputNumber inputId="s-cout" v-model="fiche.cout" :min="0" :step="100" />
+      </div>
+
+      <div v-if="fiche.id" class="champ">
         <label for="s-statut">Statut</label>
         <Select inputId="s-statut" v-model="fiche.statut" :options="STATUTS_SESSION"
                 optionLabel="label" optionValue="code" />

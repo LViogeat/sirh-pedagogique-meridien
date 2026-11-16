@@ -7,7 +7,8 @@
  * Les obligations sont définies dans le catalogue, par famille de métier
  * (Cuisine, Restauration, Technique…) ou pour tous les postes. On prend la
  * famille de métier du poste du salarié choisi, et on montre pour chaque
- * formation où il en est : à faire, inscrit, ou réalisée.
+ * formation où il en est : à faire, inscrit, ou réalisée. Une formation ne
+ * compte comme réalisée qu'une fois validée par le RH (story #64).
  */
 import { ref, computed } from 'vue'
 import { sql, formatDate, formatNombre, toast } from '@/socle/sdk'
@@ -38,7 +39,14 @@ async function charger() {
                  join sessions s on s.id = i.session_id
                 where s.formation_id = f.id
                   and i.employee_id = :salarie
-                  and i.presence = 'present') as realisee_le,
+                  and i.realisation = 'validee') as realisee_le,
+              (select max(s.date_fin)
+                 from inscriptions i
+                 join sessions s on s.id = i.session_id
+                where s.formation_id = f.id
+                  and i.employee_id = :salarie
+                  and i.presence = 'present'
+                  and i.realisation is null) as a_valider_le,
               (select min(s.date_debut)
                  from inscriptions i
                  join sessions s on s.id = i.session_id
@@ -92,6 +100,12 @@ function situation(f) {
   if (f.realisee_le && !perimee) {
     return { etat: 'Réalisée', severite: 'success', ordre: 3, a_refaire_le: aRefaireLe }
   }
+  if (f.a_valider_le) {
+    return {
+      etat: 'Suivie, à valider par le RH', severite: 'info', ordre: 2,
+      a_refaire_le: aRefaireLe,
+    }
+  }
   if (f.inscrit_le) {
     return { etat: 'Inscrit', severite: 'info', ordre: 2, a_refaire_le: aRefaireLe }
   }
@@ -125,7 +139,7 @@ function detail(f) {
       ? `Le ${formatDate(f.realisee_le)} · à refaire avant le ${formatDate(f.a_refaire_le)}`
       : `Le ${formatDate(f.realisee_le)}`
   }
-  if (f.ordre === 2) return `Session du ${formatDate(f.inscrit_le)}`
+  if (f.ordre === 2) return `Session du ${formatDate(f.a_valider_le ?? f.inscrit_le)}`
   if (f.ordre === 1) return `Session du ${formatDate(f.demandee_le)}`
   if (f.realisee_le) return `Dernière réalisation le ${formatDate(f.realisee_le)}`
   return Number(f.sessions_ouvertes) > 0
@@ -183,7 +197,7 @@ function detail(f) {
         </template>
       </Column>
 
-      <Column header="Ma situation" style="width: 11rem">
+      <Column header="Ma situation" style="width: 15rem">
         <template #body="{ data }">
           <Tag :value="data.etat" :severity="data.severite" />
         </template>

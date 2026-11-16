@@ -8,11 +8,18 @@
  *
  * Le composant prévient l'écran avec l'évènement « change », qui donne la
  * ligne complète du salarié (poste, famille de métier, établissement…).
+ *
+ * Sur les écrans du manager, on écrit <ChoixSalarie managers /> : la liste ne
+ * propose alors que les salariés qui encadrent au moins une personne.
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { getSalaries, toast } from '@/socle/sdk'
 import { salarieCourantId } from './_donnees'
 
+const props = defineProps({
+  managers: { type: Boolean, default: false },
+  libelle: { type: String, default: 'Je suis' },
+})
 const emit = defineEmits(['change'])
 
 const salaries = ref([])
@@ -20,7 +27,9 @@ const chargement = ref(true)
 
 onMounted(async () => {
   try {
-    const liste = await getSalaries()
+    const tous = await getSalaries()
+    const encadrants = new Set(tous.map((s) => s.manager_id).filter(Boolean))
+    const liste = props.managers ? tous.filter((s) => encadrants.has(s.id)) : tous
     salaries.value = liste.map((s) => ({
       ...s,
       affichage: `${s.full_name} — ${s.position_title ?? 'sans poste'} (${s.establishment_city ?? '—'})`,
@@ -41,7 +50,7 @@ watch(salarie, (s) => emit('change', s))
 
 <template>
   <div class="choix">
-    <label for="choix-salarie"><i class="pi pi-user" /> Je suis</label>
+    <label for="choix-salarie"><i class="pi pi-user" /> {{ libelle }}</label>
     <Select v-model="salarieCourantId" inputId="choix-salarie"
             :options="salaries" optionLabel="affichage" optionValue="id"
             :loading="chargement" filter showClear
