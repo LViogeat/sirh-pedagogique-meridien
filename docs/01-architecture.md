@@ -201,8 +201,8 @@ rien résoudre.
 
 ### Aucun fichier partagé entre groupes
 
-Le menu global n'existe dans aucun fichier : il est déduit des manifestes
-trouvés dans `app/src/modules/<code>/module.js`. Un dossier déposé apparaît, un
+Le menu global n'existe dans aucun fichier : il est déduit des fichiers `.vue`
+trouvés dans `app/src/modules/<code>/` (et de leur `module.js` pour les écrans de détail). Un dossier déposé apparaît, un
 dossier retiré disparaît.
 
 Conséquences : le fork d'un groupe tourne en autonome, la fusion consiste à

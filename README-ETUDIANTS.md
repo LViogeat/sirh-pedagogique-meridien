@@ -336,23 +336,18 @@ postes, les entretiens, les besoins identifiés. Vous y verrez ce dont la
 chaîne a besoin, et donc ce que votre module doit savoir faire. C'est le
 travail du premier sprint, et il ne se fait pas dans un éditeur.
 
-Quand vous saurez ce que vous construisez, créez votre manifeste. C'est le
-seul fichier dont la forme est imposée :
+Quand vous saurez ce que vous construisez, il n'y a rien à déclarer : **un
+fichier `.vue` posé dans `app/src/modules/<code>/` est un écran**, et il
+apparaît tout seul dans le menu, sous votre page d'accueil. Son nom de fichier
+donne l'adresse, et sa première ligne donne le nom dans le menu :
 
-```js
-// app/src/modules/rec/module.js      ← rec = le code de VOTRE groupe
-export default {
-  code: 'rec',
-  routes: [
-    { path: 'mon-ecran', label: 'Mon écran',
-      component: () => import('./MonEcran.vue') },
-  ],
-}
+```vue
+<!-- libelle: Fête de fin d'année -->
 ```
 
-Créez le fichier `.vue` correspondant, et l'écran apparaît dans le menu, sous
-votre page d'accueil. Le nom et l'icône de votre module sont fixés par le
-socle : votre manifeste ne décrit que vos écrans.
+Copilot écrit cette ligne pour vous. Le nom et l'icône de votre module sont
+fixés par le socle. Le fichier `module.js` de votre dossier existe déjà : vous
+n'avez pas à y toucher.
 
 ### Le circuit d'une story
 
@@ -363,8 +358,8 @@ C'est le même à chaque fois, et chaque étape laisse une trace dans GitHub :
 | **1. Écrire la story** | GitHub → *Issues* → *New issue* → le formulaire de votre groupe | n'importe qui, relu par le PO |
 | **2. La placer dans le sprint** | le tableau de votre groupe : champ *Sprint*, colonne *Todo* | le PO |
 | **3. La prendre** | *Assignees* → votre nom, puis colonne *In Progress* | celui qui la code |
-| **4. La faire coder** | Copilot : une conversation neuve, le kit **collé** (pas de trombone), puis la story et votre `module.js`, dans le même message | le même |
-| **5. Coller le code** | StackBlitz, dans `app/src/modules/<code>/` : le `.vue` **d'abord**, `module.js` ensuite | le même |
+| **4. La faire coder** | Copilot : une conversation neuve, le kit **collé** (pas de trombone), puis la story, dans le même message | le même |
+| **5. Coller le code** | StackBlitz, dans `app/src/modules/<code>/` : le fichier `.vue` rendu par Copilot, rien d'autre | le même |
 | **6. Vérifier** | l'écran, contre les critères d'acceptation de la story | un autre membre du groupe |
 | **7. Commiter** | StackBlitz → *Commit* → message `Écran des offres (#12)` → *Commit & Push* | celui qui l'a codée |
 | **8. Fermer** | la story passe en *Done* | le PO |
@@ -399,8 +394,6 @@ Trois règles qui évitent de perdre du travail :
 
 - **Une story, une personne, un fichier.** Deux personnes ne modifient jamais
   le même fichier en même temps.
-- **`module.js` appartient au PO du sprint.** C'est le seul fichier que tout le
-  groupe partage : on lui envoie la ligne à ajouter, il l'ajoute et commite.
 - **Rouvrez le lien de votre branche avant chaque story.** Un StackBlitz ouvert
   depuis une heure ne voit pas ce que vos camarades ont commité depuis.
 
@@ -1022,19 +1015,15 @@ conversation neuve :
 1. Ouvrez `app/copilot/<votre branche>.md` dans StackBlitz, Cmd+A, Cmd+C,
    et **collez** dans Copilot. Ne le joignez pas avec le trombone : en pièce
    jointe, Copilot ignore les consignes du kit.
-2. Toujours dans le même message, sous le kit, collez :
+2. Toujours dans le même message, sous le kit, collez votre story :
 
 ```
 Voici ma user story :
 
 [coller tout le texte de la story, depuis GitHub]
-
-Voici mon module.js actuel :
-
-[coller app/src/modules/<code>/module.js — ou « il n'existe pas encore »]
 ```
 
-3. Envoyez. Copilot rend le fichier `.vue` et le `module.js` mis à jour.
+3. Envoyez. Copilot rend un seul fichier : l'écran `.vue`.
 
 Le message fait près de 30 000 caractères : c'est normal, Copilot l'accepte.
 Si votre Copilot le tronque, utilisez le prompt 1 ci-dessous.
@@ -1214,7 +1203,7 @@ sur les arrivées et les départs.
 | | |
 |---|---|
 | ✅ Créer des écrans dans `src/modules/<code>/` | |
-| ✅ Ajouter des entrées dans le `routes` de votre `module.js` | |
+| ✅ Ajouter des écrans `.vue` dans le dossier de votre module | |
 | ✅ Lire tout le socle par le SDK | |
 | ✅ Créer, lire, modifier, supprimer vos propres tables | |
 | ✅ Lire les tables des autres groupes, et les joindre aux vôtres | |

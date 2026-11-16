@@ -37,7 +37,7 @@ d'acceptation, restent les mêmes d'une séance à l'autre.
 - Le kit en **pièce jointe** (trombone) ne marche pas : Copilot le traite comme
   une source documentaire, ignore les consignes et rend un store Vuex au mauvais
   chemin, avec des imports inventés.
-- Le kit **collé** dans le message, avec la story et `module.js` en dessous
+- Le kit **collé** dans le message, avec la story en dessous
   (environ 27 500 caractères), est accepté sans troncature. Copilot rend un
   écran conforme du premier coup : SDK seul, toasts, `formatDate`, `PageHeader`,
   `StatCard`, `module.js` dans la forme imposée.

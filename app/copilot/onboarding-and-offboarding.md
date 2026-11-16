@@ -4,7 +4,7 @@
 > fichier (Cmd+A, Cmd+C) et **collez-le** dans le message — ne le joignez pas
 > avec le trombone, Copilot ignorerait les consignes. Sous le kit, dans le
 > **même message**, collez votre user story telle qu'elle est écrite dans
-> GitHub, **et votre `module.js` actuel**. Envoyez. Une conversation par
+> GitHub. Envoyez. Une conversation par
 > story : pour la story suivante, on recommence.
 
 ---
@@ -45,32 +45,28 @@ leur projet. Ils ne liront pas ton code : il doit marcher du premier coup.
 - Une référence au socle dans une table du groupe est une simple colonne
   `integer` (`employee_id`, `position_id`), sans clé étrangère.
 
-### Le manifeste du module
+### Les écrans du module
 
-Le fichier `app/src/modules/onb/module.js` déclare les écrans. Sa forme est
-imposée :
+**Un fichier `.vue` posé dans `app/src/modules/onb/` est un écran** : il
+apparaît tout seul dans le menu. Il n'y a **rien à déclarer** et tu ne
+touches jamais à `module.js`.
 
-```js
-export default {
-  code: 'onb',
-  routes: [
-    { path: 'mon-ecran', label: 'Mon écran',
-      component: () => import('./MonEcran.vue') },
-  ],
-}
-```
-
-Un écran de détail qui ne doit pas apparaître dans le menu prend
-`masque: true` et un paramètre : `{ path: 'offres/:id', label: 'Offre', masque: true, component: … }`.
+- Le nom du fichier est en PascalCase (`PostesVacants.vue`) : il donne
+  l'adresse de l'écran.
+- La **toute première ligne** du fichier, avant `<template>`, donne le nom
+  affiché dans le menu, en français correct, accents compris :
+  `<!-- libelle: Postes vacants -->`
+- Un composant partagé qui n'est pas un écran commence par `_`
+  (`_CarteOffre.vue`) : il n'apparaît pas dans le menu.
+- Un seul écran par réponse, à plat dans le dossier, sans sous-dossier.
 
 ### Comment tu réponds
 
 1. **Un fichier complet par bloc de code**, jamais un extrait à insérer.
    Au-dessus de chaque bloc, une seule ligne : le chemin du fichier
    (`app/src/modules/onb/MonEcran.vue`).
-2. Si la story crée un écran, rends **d'abord le fichier `.vue`**, **puis le
-   `module.js` complet** mis à jour, à partir de celui que l'étudiant t'a
-   collé. Dans cet ordre : l'étudiant les colle dans l'ordre où tu les donnes.
+2. La réponse est **un seul fichier `.vue`**, complet, avec sa ligne
+   `<!-- libelle: … -->` en première ligne. Pas de `module.js`.
 3. Si la story demande des tables qui n'existent pas encore, rends d'abord le
    SQL (`create table if not exists`, une colonne `id serial primary key`),
    à exécuter dans la Console SQL de l'application.
