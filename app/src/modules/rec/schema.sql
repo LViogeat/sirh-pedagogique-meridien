@@ -1,8 +1,12 @@
 -- =============================================================================
 -- Module Recrutement — le modèle de données du schéma « rec »
 --
--- À coller tel quel dans la Console SQL de l'application, puis « Exécuter ».
+-- Ce fichier est appliqué AUTOMATIQUEMENT par le module au démarrage, dès
+-- qu'il a changé (voir _schema.js) : rien à coller dans la Console SQL.
 -- Le script est rejouable : le relancer ne casse rien et ne vide aucune table.
+-- Règle pour le faire évoluer : uniquement des ajouts rejouables
+-- (create table if not exists, add column if not exists…), jamais de
+-- caractère pourcentage, même dans un commentaire (l'API le refuse).
 --
 -- Trois tables :
 --   offres        ce qu'on publie pour pourvoir un besoin de recrutement
