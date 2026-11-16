@@ -2,9 +2,10 @@
 /**
  * Le compte rendu d'un entretien (story #107).
  *
- * La grille reprend les compétences attendues du poste (getPoste) : pour
- * chacune, le recruteur note le niveau constaté de 1 à 4, et l'écart avec le
- * niveau attendu s'affiche. Puis un compte rendu libre, un avis global et une
+ * La grille reprend les compétences choisies à la planification (story #127 :
+ * celles du poste et celles du panel), avec leur niveau attendu. Pour chacune,
+ * le recruteur note le niveau constaté de 1 à 4, et l'écart s'affiche. Pour un
+ * entretien planifié avant le panel, la grille reprend celles du poste. Puis un compte rendu libre, un avis global et une
  * recommandation. Enregistrer passe l'entretien à « Réalisé ».
  *
  * Le score d'adéquation est la part des compétences évaluées au niveau
@@ -62,19 +63,26 @@ async function charger() {
     entretien.value = ligne || null
     if (!ligne) return
 
-    const [poste, evaluations] = await Promise.all([
-      getPoste(ligne.position_id),
-      sql('select * from evaluations_competences where entretien_id = :id', { id: ligne.id }),
-    ])
-    const deja = Object.fromEntries(evaluations.map((e) => [e.skill_id, e]))
-    grille.value = poste.required_skills.map((s) => ({
-      skill_id: s.skill_id,
-      competence: s.skill_label,
-      categorie: s.category_label,
-      niveau_attendu: s.required_level,
-      niveau_constate: deja[s.skill_id]?.niveau_constate ?? null,
-      commentaire: deja[s.skill_id]?.commentaire ?? '',
-    }))
+    const choisies = await sql(
+      `select * from entretien_competences where entretien_id = :id
+        order by (source = 'poste') desc, id`,
+      { id: ligne.id },
+    )
+    if (choisies.length) {
+      grille.value = choisies.map((c) => ({
+        cle: `${c.source}-${c.competence_id}`, source: c.source, competence_id: c.competence_id,
+        competence: c.libelle, categorie: c.source === 'poste' ? 'Attendue sur le poste' : c.famille,
+        niveau_attendu: c.niveau_attendu, niveau_constate: c.niveau_constate,
+        commentaire: c.commentaire ?? '',
+      }))
+    } else {
+      const poste = await getPoste(ligne.position_id)
+      grille.value = poste.required_skills.map((s) => ({
+        cle: `poste-${s.skill_id}`, source: 'poste', competence_id: s.skill_id,
+        competence: s.skill_label, categorie: 'Attendue sur le poste',
+        niveau_attendu: s.required_level, niveau_constate: null, commentaire: '',
+      }))
+    }
     formulaire.value = {
       compte_rendu: ligne.compte_rendu || '',
       avis: ligne.avis,
@@ -119,19 +127,17 @@ async function enregistrer() {
   enregistrement.value = true
   try {
     for (const g of grille.value) {
-      if (!g.niveau_constate) continue
       await sql(
-        `insert into evaluations_competences
-                (entretien_id, skill_id, competence, niveau_attendu, niveau_constate, commentaire)
-         values (:entretien, :skill, :competence, :attendu, :constate, :commentaire)
-         on conflict (entretien_id, skill_id) do update
+        `insert into entretien_competences
+                (entretien_id, source, competence_id, libelle, famille, niveau_attendu, niveau_constate, commentaire)
+         values (:entretien, :source, :competence, :libelle, :famille, :attendu, :constate, :commentaire)
+         on conflict (entretien_id, source, competence_id) do update
             set niveau_constate = excluded.niveau_constate,
-                niveau_attendu  = excluded.niveau_attendu,
                 commentaire     = excluded.commentaire`,
         {
-          entretien: entretien.value.id, skill: g.skill_id, competence: g.competence,
-          attendu: g.niveau_attendu, constate: g.niveau_constate,
-          commentaire: g.commentaire?.trim() || null,
+          entretien: entretien.value.id, source: g.source, competence: g.competence_id,
+          libelle: g.competence, famille: g.categorie, attendu: g.niveau_attendu,
+          constate: g.niveau_constate || null, commentaire: g.commentaire?.trim() || null,
         },
       )
     }
@@ -177,10 +183,10 @@ async function enregistrer() {
     </div>
 
     <Card>
-      <template #title>Compétences du poste</template>
+      <template #title>Compétences évaluées</template>
       <template #content>
-        <DataTable :value="grille" dataKey="skill_id" size="small">
-          <template #empty>Aucune compétence attendue n'est définie pour ce poste dans le socle.</template>
+        <DataTable :value="grille" dataKey="cle" size="small">
+          <template #empty>Aucune compétence à évaluer pour cet entretien.</template>
           <Column header="Compétence">
             <template #body="{ data }">
               <strong>{{ data.competence }}</strong>

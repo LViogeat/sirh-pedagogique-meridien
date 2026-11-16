@@ -208,7 +208,7 @@ async function positionner() {
       <label for="offre">Offre publiée</label>
       <Select inputId="offre" v-model="positionnement.offreId" :options="offresPubliees"
               optionLabel="intitule" optionValue="id" placeholder="Choisir une offre" />
-      <p class="aide">La candidature démarre à l'étape « Nouvelle » ; elle se suit ensuite dans le pipeline.</p>
+      <p class="aide">La candidature démarre à l'étape « Candidature externe reçue » ; elle se suit ensuite sur la page du candidat et dans le Pipeline.</p>
       <div class="pied">
         <Button label="Fermer" severity="secondary" text type="button" @click="positionnement = null" />
         <Button label="Positionner" icon="pi pi-check" type="submit" :loading="enregistrement" />

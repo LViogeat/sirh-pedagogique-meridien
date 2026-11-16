@@ -5,6 +5,10 @@
  * On y arrive en cliquant sur un nom dans l'écran « Candidats » ou sur une
  * carte du Pipeline. Elle rassemble les coordonnées, toutes les candidatures
  * (et l'étape de chacune), les entretiens et les pièces jointes.
+ *
+ * Story #127 : sous chaque DP (demande de poste = offre), la frise du
+ * workflow de recrutement, les boutons pour avancer, revenir, refuser ou
+ * réactiver (_WorkflowActions), et l'historique de chaque changement.
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -13,6 +17,10 @@ import {
   TYPES_DOCUMENT, libelleType, formatTaille, verifierFichier,
   ajouterPiece, listerPieces, ouvrirPiece, telechargerPiece,
 } from './_fichiers.js'
+import {
+  ETAPES, rangDe, libelleEtape, SEVERITES, MOUVEMENTS, chargerHistorique,
+} from './_workflow.js'
+import WorkflowActions from './_WorkflowActions.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,14 +36,7 @@ const chargement = ref(true)
 const enregistrement = ref(false)
 
 const SOURCES = ['Spontanée', 'Site carrière', 'Indeed', 'LinkedIn', 'France Travail', 'Cooptation', 'École / alternance']
-const ETAPES = {
-  nouvelle: { label: 'Nouvelle', severite: 'secondary' },
-  preselection: { label: 'Présélection', severite: 'info' },
-  entretien: { label: 'Entretien', severite: 'info' },
-  proposition: { label: 'Proposition', severite: 'warn' },
-  embauche: { label: 'Embauche', severite: 'success' },
-  refus: { label: 'Refus', severite: 'danger' },
-}
+const historique = ref([])
 const AVIS = {
   favorable: { label: 'Favorable', severite: 'success' },
   reserve: { label: 'Réservé', severite: 'warn' },
@@ -57,9 +58,13 @@ async function charger() {
         { id: candidatId.value },
       ),
       sql(
-        `select ca.id, ca.etape, ca.note, ca.recue_le, ca.maj_le,
-                o.id as offre_id, o.intitule, o.statut as statut_offre, o.establishment_id
-           from candidatures ca join offres o on o.id = ca.offre_id
+        `select ca.id, ca.etape, ca.etape_avant_refus, ca.motif_refus, ca.note, ca.recue_le, ca.maj_le,
+                c.prenom, c.nom,
+                o.id as offre_id, o.intitule, o.statut as statut_offre, o.establishment_id,
+                o.position_id, o.besoin_id
+           from candidatures ca
+           join offres o on o.id = ca.offre_id
+           join candidats c on c.id = ca.candidat_id
           where ca.candidat_id = :id order by ca.recue_le desc, ca.id desc`,
         { id: candidatId.value },
       ),
@@ -77,6 +82,7 @@ async function charger() {
     candidat.value = lignes[0] || null
     fiche.value = candidat.value ? { ...candidat.value } : null
     candidatures.value = liste
+    historique.value = await chargerHistorique(liste.map((c) => c.id))
     entretiens.value = rdv
     pieces.value = docs
     hotels.value = Object.fromEntries(etabs.map((e) => [e.id, e]))
@@ -162,6 +168,16 @@ async function supprimer() {
   } catch (erreur) {
     toast.erreur(erreur.message)
   }
+}
+
+const historiqueDe = (candidatureId) => historique.value.filter((h) => h.candidature_id === candidatureId)
+const quand = (v) => `${formatDate(v)} à ${new Date(v).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+const etatEtape = (candidature, code) => {
+  const actuel = rangDe(candidature.etape === 'refus' ? candidature.etape_avant_refus : candidature.etape)
+  const rang = rangDe(code)
+  if (rang < actuel) return 'faite'
+  if (rang === actuel) return candidature.etape === 'refus' ? 'refusee' : 'actuelle'
+  return 'a-venir'
 }
 
 const hotelCourt = (id) => (hotels.value[id]?.name || '').replace(/^Sorbonne-Hôtel\s+/, '')
@@ -253,40 +269,56 @@ const dateHeure = (v) =>
         </template>
       </Card>
 
-      <!-- Candidatures -->
+      <!-- Candidatures : une DP par bloc, avec son workflow et son historique -->
       <Card class="large">
         <template #title>Candidatures</template>
         <template #content>
-          <DataTable :value="candidatures" dataKey="id" size="small">
-            <template #empty>Ce candidat n'est positionné sur aucune offre.</template>
-            <Column header="Offre">
-              <template #body="{ data }">
-                <a href="#" class="lien" @click.prevent="router.push({ path: '/rec/pipeline', query: { offre: data.offre_id } })">
-                  {{ data.intitule }}
+          <p v-if="!candidatures.length" class="muet">Ce candidat n'est positionné sur aucune offre.</p>
+
+          <section v-for="ca in candidatures" :key="ca.id" class="dp">
+            <header class="dp-entete">
+              <div>
+                <a href="#" class="lien titre-dp"
+                   @click.prevent="router.push({ path: '/rec/pipeline', query: { offre: ca.offre_id } })">
+                  {{ ca.intitule }}
                 </a>
-              </template>
-            </Column>
-            <Column header="Hôtel">
-              <template #body="{ data }">{{ hotelCourt(data.establishment_id) }}</template>
-            </Column>
-            <Column header="Étape" style="width: 9rem">
-              <template #body="{ data }">
-                <Tag :value="ETAPES[data.etape]?.label" :severity="ETAPES[data.etape]?.severite" />
-              </template>
-            </Column>
-            <Column header="Note" style="width: 8rem">
-              <template #body="{ data }">
-                <Rating v-if="data.note" :modelValue="data.note" readonly :stars="5" />
-                <span v-else class="muet">—</span>
-              </template>
-            </Column>
-            <Column header="Reçue le" style="width: 7rem">
-              <template #body="{ data }">{{ formatDate(data.recue_le) }}</template>
-            </Column>
-            <Column header="Dernier mouvement" style="width: 9rem">
-              <template #body="{ data }">{{ formatDate(data.maj_le) }}</template>
-            </Column>
-          </DataTable>
+                <span class="detail">
+                  DP n° {{ ca.offre_id }} · {{ hotelCourt(ca.establishment_id) }} · candidature reçue le {{ formatDate(ca.recue_le) }}
+                </span>
+              </div>
+              <Tag :value="ca.etape === 'refus' ? `Refusé · ${ca.motif_refus}` : libelleEtape(ca.etape)"
+                   :severity="SEVERITES[ca.etape]" />
+            </header>
+
+            <ol class="frise">
+              <li v-for="(e, i) in ETAPES" :key="e.code" :class="etatEtape(ca, e.code)">
+                <span class="pastille">
+                  <i v-if="etatEtape(ca, e.code) === 'faite'" class="pi pi-check" />
+                  <i v-else-if="etatEtape(ca, e.code) === 'refusee'" class="pi pi-times" />
+                  <template v-else>{{ i + 1 }}</template>
+                </span>
+                <span class="libelle">{{ e.label }}</span>
+              </li>
+            </ol>
+
+            <WorkflowActions :candidature="ca" @change="charger" />
+
+            <details class="historique" :open="historiqueDe(ca.id).length > 0 && historiqueDe(ca.id).length <= 5">
+              <summary>Historique du workflow · {{ historiqueDe(ca.id).length }} mouvement(s)</summary>
+              <p v-if="!historiqueDe(ca.id).length" class="muet">Aucun mouvement depuis la réception de la candidature.</p>
+              <ul v-else>
+                <li v-for="h in historiqueDe(ca.id)" :key="h.id" :class="h.mouvement">
+                  <i :class="MOUVEMENTS[h.mouvement].icone" />
+                  <span class="date">{{ quand(h.fait_le) }}</span>
+                  <span>{{ libelleEtape(h.etape_depart) }} → <strong>{{ libelleEtape(h.etape_arrivee) }}</strong></span>
+                  <Tag v-if="h.mouvement !== 'avance'" :value="MOUVEMENTS[h.mouvement].label"
+                       :severity="h.mouvement === 'retour' ? 'warn' : h.mouvement === 'refus' ? 'danger' : 'info'" class="petit" />
+                  <span v-if="h.motif" class="texte">Motif : {{ h.motif }}</span>
+                  <span v-if="h.commentaire" class="texte">« {{ h.commentaire }} »</span>
+                </li>
+              </ul>
+            </details>
+          </section>
         </template>
       </Card>
 
@@ -345,6 +377,35 @@ const dateHeure = (v) =>
 .detail { display: block; font-size: .78rem; color: var(--p-text-muted-color); }
 .muet { color: var(--p-text-muted-color); }
 :deep(.p-card-title) { font-size: 1rem; }
+.dp { border: 1px solid var(--p-surface-200); border-radius: 10px; padding: .9rem 1rem; margin-bottom: .9rem; }
+.dp-entete { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: .75rem; }
+.titre-dp { font-size: 1rem; font-weight: 600; }
+.frise { display: grid; grid-template-columns: repeat(6, 1fr); list-style: none; padding: 0; margin: 0 0 .9rem; }
+.frise li { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .3rem; position: relative; }
+.frise li:not(:first-child)::before {
+  content: ''; position: absolute; top: .8rem; right: 50%; width: 100%; height: 2px;
+  background: var(--p-surface-300); z-index: 0;
+}
+.frise li.faite::before, .frise li.actuelle::before, .frise li.refusee::before { background: var(--p-primary-color); }
+.pastille {
+  width: 1.65rem; height: 1.65rem; border-radius: 50%; display: grid; place-items: center; z-index: 1;
+  font-size: .75rem; font-weight: 600; background: var(--p-surface-0); border: 2px solid var(--p-surface-300);
+  color: var(--p-text-muted-color);
+}
+.faite .pastille { background: var(--p-primary-color); border-color: var(--p-primary-color); color: #fff; }
+.actuelle .pastille { border-color: var(--p-primary-color); color: var(--p-primary-color); box-shadow: 0 0 0 4px var(--p-primary-100); }
+.refusee .pastille { background: var(--p-red-500); border-color: var(--p-red-500); color: #fff; }
+.frise .libelle { font-size: .75rem; color: var(--p-text-muted-color); max-width: 7rem; line-height: 1.2; }
+.actuelle .libelle { color: var(--p-text-color); font-weight: 600; }
+.historique { margin-top: .9rem; font-size: .85rem; }
+.historique summary { cursor: pointer; font-weight: 600; color: var(--p-text-muted-color); }
+.historique ul { list-style: none; padding: 0; margin: .5rem 0 0; display: flex; flex-direction: column; gap: .35rem; }
+.historique li { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .35rem .5rem; border-radius: 6px; background: var(--p-surface-50); }
+.historique li.retour { background: var(--p-yellow-50); }
+.historique li.refus { background: var(--p-red-50); }
+.historique .date { color: var(--p-text-muted-color); min-width: 8.5rem; }
+.historique .texte { color: var(--p-text-muted-color); font-style: italic; }
+.petit { font-size: .7rem; }
 :deep(.p-rating-icon) { width: .8rem; height: .8rem; }
 @media (max-width: 1000px) { .grille { grid-template-columns: 1fr; } }
 </style>

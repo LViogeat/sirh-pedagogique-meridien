@@ -8,7 +8,7 @@
  *   - crée le candidat (source « Site carrière »), ou retrouve celui qui a
  *     déjà postulé avec la même adresse e-mail ;
  *   - enregistre la date de son consentement au traitement des données ;
- *   - crée la candidature à l'étape « Nouvelle », sans doublon possible ;
+ *   - crée la candidature à l'étape « Candidature externe reçue », sans doublon ;
  *   - range le CV dans ses pièces jointes.
  */
 import { ref, computed, onMounted } from 'vue'

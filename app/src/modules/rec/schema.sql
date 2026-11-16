@@ -103,3 +103,86 @@ create table if not exists pieces_jointes (
   contenu        text    not null,                   -- le fichier, encodé en base64
   ajoutee_le     date    not null default current_date
 );
+
+
+-- =============================================================================
+-- Workflow de recrutement (story #127)
+--
+--   1 Candidature externe reçue (nouvelle)   4 Offre à présenter (proposition)
+--   2 Tri de CV                (preselection) 5 Offre acceptée    (offre_acceptee)
+--   3 Entretien à réaliser     (entretien)    6 Embauché          (embauche)
+--   — Refusé (refus) : sortie du workflow, avec motif, réactivable
+-- =============================================================================
+
+-- La nouvelle étape « offre acceptée ».
+alter table candidatures drop constraint if exists candidatures_etape_check;
+alter table candidatures add constraint candidatures_etape_check
+  check (etape in ('nouvelle', 'preselection', 'entretien', 'proposition',
+                   'offre_acceptee', 'embauche', 'refus'));
+
+-- Le refus : son motif, et l'étape à laquelle revenir si on réactive.
+alter table candidatures add column if not exists motif_refus text;
+alter table candidatures add column if not exists etape_avant_refus text;
+
+-- Chaque changement d'étape, quel que soit l'écran d'où il est fait.
+create table if not exists historique_etapes (
+  id              serial    primary key,
+  candidature_id  integer   not null references candidatures(id) on delete cascade,
+  etape_depart    text,
+  etape_arrivee   text      not null,
+  mouvement       text      not null
+                  check (mouvement in ('avance', 'retour', 'refus', 'reactivation')),
+  motif           text,                              -- motif de refus
+  commentaire     text,
+  fait_le         timestamp not null
+);
+
+-- Le panel de compétences que le recruteur peut choisir d'évaluer.
+create table if not exists panel_competences (
+  id       serial  primary key,
+  famille  text    not null,
+  libelle  text    not null unique,
+  ordre    integer not null
+);
+
+insert into panel_competences (famille, libelle, ordre) values
+  ('Savoir-être', 'Sens du service client', 1),
+  ('Savoir-être', 'Présentation et savoir-vivre', 2),
+  ('Savoir-être', 'Fiabilité et ponctualité', 3),
+  ('Savoir-être', 'Esprit d''équipe', 4),
+  ('Communication et langues', 'Expression orale', 5),
+  ('Communication et langues', 'Écoute et reformulation', 6),
+  ('Communication et langues', 'Anglais professionnel', 7),
+  ('Communication et langues', 'Seconde langue étrangère', 8),
+  ('Techniques hôtelières', 'Accueil et check-in / check-out', 9),
+  ('Techniques hôtelières', 'Logiciel de réservation (PMS)', 10),
+  ('Techniques hôtelières', 'Hygiène et normes HACCP', 11),
+  ('Techniques hôtelières', 'Remise en état des chambres', 12),
+  ('Organisation et management', 'Organisation et gestion des priorités', 13),
+  ('Organisation et management', 'Gestion des réclamations', 14),
+  ('Organisation et management', 'Prise d''initiative', 15),
+  ('Organisation et management', 'Animation d''équipe', 16)
+on conflict (libelle) do nothing;
+
+-- Les compétences retenues pour un entretien, et leur évaluation.
+--   source 'poste' : competence_id = public.skills (attendue sur le poste)
+--   source 'panel' : competence_id = panel_competences
+create table if not exists entretien_competences (
+  id               serial  primary key,
+  entretien_id     integer not null references entretiens(id) on delete cascade,
+  source           text    not null check (source in ('poste', 'panel')),
+  competence_id    integer not null,
+  libelle          text    not null,
+  famille          text,
+  niveau_attendu   integer not null check (niveau_attendu between 1 and 4),
+  niveau_constate  integer check (niveau_constate between 1 and 4),
+  commentaire      text,
+  unique (entretien_id, source, competence_id)
+);
+
+-- Les évaluations déjà saisies au sprint 2 sont reprises dans la nouvelle table.
+insert into entretien_competences
+       (entretien_id, source, competence_id, libelle, niveau_attendu, niveau_constate, commentaire)
+select entretien_id, 'poste', skill_id, competence, coalesce(niveau_attendu, 2), niveau_constate, commentaire
+  from evaluations_competences
+on conflict (entretien_id, source, competence_id) do nothing;

@@ -8,15 +8,9 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { getBesoins, sql, formatDate, formatNombre, toast } from '@/socle/sdk'
+import { ETAPES as ETAPES_WORKFLOW, REFUS } from './_workflow.js'
 
-const ETAPES = [
-  { code: 'nouvelle', label: 'Nouvelle' },
-  { code: 'preselection', label: 'Présélection' },
-  { code: 'entretien', label: 'Entretien' },
-  { code: 'proposition', label: 'Proposition' },
-  { code: 'embauche', label: 'Embauche' },
-  { code: 'refus', label: 'Refus' },
-]
+const ETAPES = [...ETAPES_WORKFLOW, REFUS]
 
 const besoins = ref([])
 const offres = ref([])
@@ -117,7 +111,7 @@ const parHotel = computed(() => {
       <template #title>Candidatures par étape</template>
       <template #content>
         <DataTable :value="etapes" :loading="chargement" dataKey="code" size="small">
-          <Column field="label" header="Étape" />
+          <Column field="label" header="Étape du workflow" />
           <Column field="nb" header="Candidatures" style="width: 9rem">
             <template #body="{ data }">
               <span :class="{ muet: !data.nb }">{{ data.nb }}</span>
