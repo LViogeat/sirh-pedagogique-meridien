@@ -27,7 +27,8 @@ async function charger() {
       sql(
         `select c.*,
                 count(ca.id)::int as nb_candidatures,
-                string_agg(o.intitule, ' · ' order by ca.id) as offres
+                coalesce(json_agg(json_build_object('id', o.id, 'intitule', o.intitule) order by ca.id)
+                         filter (where o.id is not null), '[]') as offres
            from candidats c
            left join candidatures ca on ca.candidat_id = c.id
            left join offres o on o.id = ca.offre_id
@@ -158,7 +159,12 @@ async function positionner() {
 
     <Column field="nb_candidatures" header="Offres" sortable>
       <template #body="{ data }">
-        <span v-if="data.nb_candidatures">{{ data.offres }}</span>
+        <span v-if="data.nb_candidatures" class="offres">
+          <template v-for="(o, i) in data.offres" :key="o.id">
+            <span v-if="i" class="separateur"> · </span>
+            <a href="#" class="offre" @click.prevent="router.push(`/rec/offre/${o.id}`)">{{ o.intitule }}</a>
+          </template>
+        </span>
         <span v-else class="muet">Aucune</span>
       </template>
     </Column>
@@ -222,6 +228,9 @@ async function positionner() {
 .barre :deep(input) { min-width: 18rem; }
 .nom { font-weight: 600; color: var(--p-primary-color); text-decoration: none; }
 .nom:hover { text-decoration: underline; }
+.offre { color: var(--p-primary-color); text-decoration: none; }
+.offre:hover { text-decoration: underline; }
+.separateur { color: var(--p-text-muted-color); }
 .detail { display: block; font-size: .8rem; color: var(--p-text-muted-color); }
 .muet { color: var(--p-text-muted-color); }
 .formulaire { display: flex; flex-direction: column; gap: .4rem; }
