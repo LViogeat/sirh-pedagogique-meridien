@@ -104,7 +104,7 @@ regle "branches des groupes" "[${refs_groupes%,}]" \
 if [ -n "${1:-}" ]; then
   etape "Invitations"
   [ -r "$1" ] || { echo "Fichier introuvable : $1" >&2; exit 1; }
-  while IFS=, read -r login branche; do
+  while IFS=, read -r login branche || [ -n "$login" ]; do
     login=$(echo "$login" | tr -d '[:space:]')
     [ -n "$login" ] && [ "$login" != "identifiant-github" ] || continue
     gh api -X PUT "repos/$REPO/collaborators/$login" -f permission=push >/dev/null \
@@ -185,7 +185,7 @@ for g in "${GROUPES[@]}"; do
 
   # Les membres du groupe, d'après le CSV : droit d'écriture sur CE tableau.
   if [ -n "${1:-}" ]; then
-    while IFS=, read -r login b; do
+    while IFS=, read -r login b || [ -n "$login" ]; do
       login=$(echo "$login" | tr -d '[:space:]'); b=$(echo "$b" | tr -d '[:space:]')
       [ "$b" = "$branche" ] && [ -n "$login" ] || continue
       id_user=$(gh api "users/$login" --jq .node_id 2>/dev/null) \
