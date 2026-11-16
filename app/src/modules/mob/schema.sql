@@ -40,3 +40,37 @@ create table if not exists mobilites (
   establishment_arrivee_id integer,
   date_effet               date    not null
 );
+
+-- ---------------------------------------------------------------------------
+-- Compléments pour les sprints 2 et 3 (déjà appliqués au socle, rejouables)
+-- ---------------------------------------------------------------------------
+
+-- Commentaire de clôture du dossier
+alter table dossiers add column if not exists commentaire text;
+
+-- Hôtel de départ de la mobilité
+alter table mobilites add column if not exists establishment_depart_id integer;
+
+-- Date d'acceptation ou de refus d'une proposition
+alter table propositions add column if not exists decidee_le date;
+
+-- Plus de date de l'horloge : l'écran donne toujours getDateReference()
+alter table dossiers     alter column ouvert_le    drop default;
+alter table propositions alter column proposee_le  drop default;
+alter table echanges     alter column date_echange drop default;
+
+-- Un seul dossier par besoin
+create unique index if not exists dossiers_un_par_besoin
+  on dossiers (besoin_id);
+
+-- Un même poste ne peut pas être proposé deux fois au même dossier
+create unique index if not exists propositions_poste_unique
+  on propositions (dossier_id, position_id);
+
+-- Une seule proposition acceptée par dossier
+create unique index if not exists propositions_une_acceptee
+  on propositions (dossier_id) where statut = 'acceptee';
+
+-- Une seule mobilité par dossier
+create unique index if not exists mobilites_une_par_dossier
+  on mobilites (dossier_id);
